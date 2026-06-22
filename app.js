@@ -21,6 +21,11 @@ const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166"
 const dayColorOverrides = {
   13: "#e879f9"
 };
+const optionDayColorOverrides = {
+  "option-b": {
+    8: "#e879f9"
+  }
+};
 let routeGeometryData = {};
 let routeGeometryPayload = {};
 const availableRouteOptions = typeof routeOptions !== "undefined"
@@ -686,7 +691,7 @@ function renderOverviewMarkers() {
 }
 
 function getDayColor(day) {
-  return dayColorOverrides[day.day] || colors[(day.day - 1) % colors.length];
+  return optionDayColorOverrides[activeRouteOption?.id]?.[day.day] || dayColorOverrides[day.day] || colors[(day.day - 1) % colors.length];
 }
 
 function numberedIcon(dayNumber, stopNumber, color) {
