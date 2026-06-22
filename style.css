@@ -658,6 +658,20 @@ h4 {
   padding: 14px;
 }
 
+
+.place-preview {
+  width: 100%;
+  height: 170px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin: 10px 0 12px;
+  background: #111923;
+}
+
+.meal-preview {
+  height: 150px;
+}
+
 .hotel-content dl {
   display: grid;
   gap: 8px;

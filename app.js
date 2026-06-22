@@ -256,6 +256,7 @@ function hotelCard(hotel) {
           <span>${escapeHtml(hotel.priceRange)}</span>
           <span>${escapeHtml(hotel.rating)}</span>
         </div>
+        <iframe class="place-preview" title="Google Maps Vorschau ${escapeHtml(hotel.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapEmbedLink(hotel.name, hotel.address)}"></iframe>
         <dl>
           <div><dt>Parken</dt><dd>${escapeHtml(hotel.parking)}</dd></div>
           <div><dt>Vorteil</dt><dd>${escapeHtml(hotel.pro)}</dd></div>
@@ -280,6 +281,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
+      <iframe class="place-preview meal-preview" title="Google Maps Vorschau ${escapeHtml(meal.title)} ${escapeHtml(meal.place)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${meal.embed}"></iframe>
       <div class="meal-progress">
         <span style="width: ${meal.progress}%"></span>
       </div>
@@ -409,8 +411,14 @@ function makeMeal(label, time, title, stop, note, progress, query) {
     note,
     progress,
     google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
+    embed: mapEmbedLink(query, stop.address),
     apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`
   };
+}
+
+
+function mapEmbedLink(name, address) {
+  return `https://www.google.com/maps?q=${encodeURIComponent(`${name} ${address}`)}&output=embed`;
 }
 
 function daySearchText(day) {
