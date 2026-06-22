@@ -220,6 +220,7 @@ function renderDetails(day) {
       </div>
     </section>
   `;
+  hydratePlacePhotos();
 }
 
 function stopCard(stop, index, dayNumber) {
@@ -243,10 +244,12 @@ function stopCard(stop, index, dayNumber) {
 function hotelCard(hotel) {
   return `
     <article class="hotel-card">
-      <a class="hotel-photo-link" href="${hotel.links.photos}" target="_blank" rel="noreferrer">
-        <span>${escapeHtml(hotel.imageLabel)}</span>
-        <strong>auf Google Maps öffnen</strong>
-      </a>
+      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(`${hotel.name} ${hotel.address}`)}" data-place-kind="hotel">
+        <div class="place-photo-empty">
+          <span>Echte Google-Fotos</span>
+          <strong>API-Key eintragen</strong>
+        </div>
+      </div>
       <div class="hotel-content">
         <p class="hotel-area">${escapeHtml(hotel.area)}</p>
         <h4>${escapeHtml(hotel.name)}</h4>
@@ -281,6 +284,12 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
+      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-kind="restaurant">
+        <div class="place-photo-empty">
+          <span>Echte Google-Fotos</span>
+          <strong>API-Key eintragen</strong>
+        </div>
+      </div>
       <iframe class="place-preview meal-preview" title="Google Maps Vorschau ${escapeHtml(meal.title)} ${escapeHtml(meal.place)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${meal.embed}"></iframe>
       <div class="meal-progress">
         <span style="width: ${meal.progress}%"></span>
@@ -410,12 +419,87 @@ function makeMeal(label, time, title, stop, note, progress, query) {
     place: stop.name,
     note,
     progress,
+    search,
     google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
     embed: mapEmbedLink(query, stop.address),
     apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`
   };
 }
 
+
+
+let googlePlacesPromise;
+let placesService;
+
+function hydratePlacePhotos() {
+  const cards = [...document.querySelectorAll(".place-photo-card")];
+  if (!cards.length) return;
+
+  if (!window.GOOGLE_MAPS_API_KEY) {
+    cards.forEach((card) => {
+      card.classList.add("needs-api-key");
+    });
+    return;
+  }
+
+  loadGooglePlaces().then(() => {
+    cards.forEach(loadPlaceCard);
+  }).catch(() => {
+    cards.forEach((card) => {
+      card.innerHTML = '<div class="place-photo-empty"><span>Google Places</span><strong>konnte nicht geladen werden</strong></div>';
+    });
+  });
+}
+
+function loadGooglePlaces() {
+  if (googlePlacesPromise) return googlePlacesPromise;
+  googlePlacesPromise = new Promise((resolve, reject) => {
+    if (window.google?.maps?.places) {
+      placesService = placesService || new google.maps.places.PlacesService(document.createElement("div"));
+      resolve();
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(window.GOOGLE_MAPS_API_KEY)}&libraries=places&language=de&region=DE`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      placesService = new google.maps.places.PlacesService(document.createElement("div"));
+      resolve();
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return googlePlacesPromise;
+}
+
+function loadPlaceCard(card) {
+  const query = card.dataset.placeQuery;
+  if (!query || !placesService) return;
+  placesService.findPlaceFromQuery({
+    query,
+    fields: ["name", "photos", "rating", "user_ratings_total", "price_level", "formatted_address", "url"]
+  }, (results, status) => {
+    if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.[0]) {
+      card.innerHTML = '<div class="place-photo-empty"><span>Keine Google-Fotos gefunden</span><strong>Google Maps öffnen</strong></div>';
+      return;
+    }
+    const place = results[0];
+    const photo = place.photos?.[0]?.getUrl({ maxWidth: 900, maxHeight: 520 });
+    const rating = place.rating ? `${place.rating.toFixed(1)} Sterne` : "Bewertung live prüfen";
+    const count = place.user_ratings_total ? `${place.user_ratings_total} Bewertungen` : "";
+    const price = typeof place.price_level === "number" ? "€".repeat(Math.max(1, place.price_level)) : "Preis live prüfen";
+    const photoMarkup = photo ? `<img src="${photo}" alt="${escapeHtml(place.name || query)}" loading="lazy" />` : "";
+    card.innerHTML = `
+      ${photoMarkup}
+      <div class="place-photo-overlay">
+        <span>${escapeHtml(place.name || query)}</span>
+        <strong>${escapeHtml(rating)}${count ? ` · ${escapeHtml(count)}` : ""}</strong>
+        <small>${escapeHtml(price)}</small>
+      </div>
+    `;
+  });
+}
 
 function mapEmbedLink(name, address) {
   return `https://www.google.com/maps?q=${encodeURIComponent(`${name} ${address}`)}&output=embed`;
@@ -442,6 +526,10 @@ function stars(count) {
 
 function normalize(value) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function escapeHtmlAttr(value) {
+  return escapeHtml(value).replace(/`/g, "&#096;");
 }
 
 function escapeHtml(value) {

@@ -7,7 +7,7 @@ const routeData = [
     curveFactor: 5,
     description: "Direkt am ersten Abend in der Nähe der Ramstein Air Base ankommen, aber über Markgräflerland, Nordelsass und Pfälzerwald statt Autobahn.",
     focus: "Ramstein am 1. Abend, Pfälzerwald, Orte statt Autobahn",
-    note: "Ramstein Air Base ist eine aktive Militärbasis. Restaurants und Einrichtungen auf der Base sind nur mit entsprechender Zugangsberechtigung nutzbar. Ohne Base-Zugang im Umfeld Landstuhl/Ramstein essen und übernachten.",
+    note: "Ramstein Air Base ist eine aktive Militärbasis. Ihr habt keinen Militärbasis-Zugang; deshalb sind nur Hotels, Diners und Restaurants außerhalb der Base eingeplant.",
     riderNotes: ["Früh starten, damit der erste Tag trotz 300+ km entspannt bleibt.", "Navigation auf „Autobahn vermeiden“ und „kurvig“ stellen.", "Im Pfälzerwald viele Pausen einplanen, die Strecke ist kurvig und konzentriert."],
     highlights: ["Markgräflerland", "Elsass", "Deutsche Weinstraße", "Johanniskreuz", "Ramstein/Landstuhl"],
     stops: [
@@ -27,8 +27,8 @@ const routeData = [
       hotel("Schlosshotel Landstuhl", "Oberhalb Landstuhl", "Burgweg 10, Landstuhl", 49.4142, 7.5730, "Parkoption vor Buchung anfragen.", "Ruhiger Abschluss mit Blicklage.", "Zufahrt kann mit Gepäck etwas steiler sein.")
     ],
     food: [
-      "Ohne Base-Zugang: The BBQ Connection / American Food im Raum Ramstein prüfen.",
-      "Mit berechtigtem Base-Zugang: Chili's auf Ramstein Air Base ist offiziell gelistet, aber Zugang ist nicht frei."
+      "Kein Base-Zugang: Dinner/Diner ausschließlich außerhalb der Ramstein Air Base planen.",
+      "Empfehlung: American Diner, BBQ oder Steakhouse im Raum Landstuhl/Ramstein über Google Maps live prüfen."
     ]
   },
   {

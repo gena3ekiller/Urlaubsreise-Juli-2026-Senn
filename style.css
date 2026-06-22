@@ -610,7 +610,65 @@ h4 {
   overflow: hidden;
 }
 
- .hotel-photo-link {
+ 
+.place-photo-card {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 190px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(255, 184, 77, 0.22), rgba(84, 214, 255, 0.14)),
+    #131a23;
+}
+
+.meal-photo-card {
+  min-height: 150px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  margin: 10px 0 12px;
+}
+
+.place-photo-card img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.place-photo-card::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.04), rgba(0, 0, 0, 0.68));
+}
+
+.place-photo-empty,
+.place-photo-overlay {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  color: var(--text);
+  text-align: center;
+}
+
+.place-photo-empty span,
+.place-photo-overlay span {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.place-photo-empty strong,
+.place-photo-overlay strong,
+.place-photo-overlay small {
+  color: var(--soft);
+}
+
+.hotel-photo-link {
   position: relative;
   display: grid;
   place-items: center;
