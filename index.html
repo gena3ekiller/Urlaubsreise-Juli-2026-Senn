@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0f14" />
+    <title>Motorradroute Basel - Caen</title>
+    <link rel="preconnect" href="https://unpkg.com" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Tagesliste">
+        <header class="brand">
+          <div>
+            <p class="eyebrow">14 Tage · ohne Autobahn planen</p>
+            <h1>Basel → Caen → Basel</h1>
+          </div>
+          <button class="icon-button" id="showAllMobile" type="button" title="Alles anzeigen">↗</button>
+        </header>
+
+        <label class="search-wrap">
+          <span>Suchen</span>
+          <input id="searchInput" type="search" placeholder="Tag, Ort, Hotel, Highlight..." autocomplete="off" />
+        </label>
+
+        <div class="trip-summary">
+          <div><strong>3</strong><span>Länder</span></div>
+          <div><strong>14</strong><span>Etappen</span></div>
+          <div><strong>~2.575</strong><span>km</span></div>
+        </div>
+
+        <nav class="day-list" id="dayList" aria-label="Reisetage"></nav>
+      </aside>
+
+      <main class="main-panel">
+        <section class="map-panel" aria-label="Interaktive Karte">
+          <div id="map"></div>
+          <div class="map-actions" aria-label="Kartenaktionen">
+            <button id="showAllBtn" type="button">Alles anzeigen</button>
+            <button id="focusDayBtn" type="button">Tag fokussieren</button>
+          </div>
+        </section>
+
+        <section class="details-panel" id="detailsPanel" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./data/routeData.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
