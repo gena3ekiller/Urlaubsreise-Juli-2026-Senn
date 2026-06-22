@@ -320,36 +320,44 @@ h4 {
   backdrop-filter: blur(12px);
 }
 
-.numbered-marker {
+.map-pin {
   position: relative;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border: 3px solid #fff;
   border-radius: 50% 50% 50% 9px;
   background: var(--marker-color);
-  color: #081018;
+  color: #061018;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
   transform: rotate(-45deg);
 }
 
-.numbered-marker span,
-.numbered-marker small {
-  grid-area: 1 / 1;
-  transform: rotate(45deg);
+.map-pin::after {
+  position: absolute;
+  inset: 7px;
+  content: "";
+  border-radius: 50%;
+  background: #ffffff;
 }
 
-.numbered-marker span {
-  margin-top: -4px;
-  font-size: 1rem;
+.map-pin span {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  transform: rotate(45deg);
+  font-size: 0.9rem;
   font-weight: 950;
 }
 
-.numbered-marker small {
-  margin-top: 16px;
-  font-size: 0.58rem;
-  font-weight: 900;
+.overview-pin {
+  width: 32px;
+  height: 32px;
+}
+
+.overview-pin span {
+  font-size: 0.86rem;
 }
 
 .leaflet-popup-content-wrapper,

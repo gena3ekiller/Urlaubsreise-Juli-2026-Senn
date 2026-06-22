@@ -8,7 +8,8 @@ const els = {
 };
 
 const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166", "#47e5bc"];
-const allStops = routeData.flatMap((day) => day.stops.map((stop) => [stop.lat, stop.lng]));
+let routeGeometryData = {};
+let allRoutePoints = routeData.flatMap((day) => getRoutePoints(day));
 let activeDay = routeData[0];
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
@@ -31,12 +32,25 @@ routeLayer.addTo(map);
 markerLayer.addTo(map);
 activeRouteLayer.addTo(map);
 
-function init() {
+async function init() {
+  await loadRouteGeometry();
   renderDayList(routeData);
   renderAllRoutes();
   selectDay(1, { fit: false });
   fitAll();
   bindEvents();
+}
+
+async function loadRouteGeometry() {
+  try {
+    const response = await fetch("./data/routeGeometry.json?v=2");
+    if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
+    const payload = await response.json();
+    routeGeometryData = payload.geometry || {};
+    allRoutePoints = routeData.flatMap((day) => getRoutePoints(day));
+  } catch (error) {
+    console.warn("Straßengeometrie konnte nicht geladen werden, nutze Zwischenpunkte.", error);
+  }
 }
 
 function bindEvents() {
@@ -85,10 +99,10 @@ function renderDayList(days) {
 function renderAllRoutes() {
   routeLayer.clearLayers();
   routeData.forEach((day, index) => {
-    L.polyline(day.stops.map((stop) => [stop.lat, stop.lng]), {
+    L.polyline(getRoutePoints(day), {
       color: colors[index % colors.length],
-      weight: 3,
-      opacity: 0.42,
+      weight: 4,
+      opacity: 0.88,
       lineCap: "round",
       lineJoin: "round"
     }).addTo(routeLayer);
@@ -108,12 +122,12 @@ function renderActiveRoute(day) {
   markerLayer.clearLayers();
   activeRouteLayer.clearLayers();
   const dayColor = colors[(day.day - 1) % colors.length];
-  const points = day.stops.map((stop) => [stop.lat, stop.lng]);
+  const points = getRoutePoints(day);
 
   L.polyline(points, {
-    color: "#ffffff",
-    weight: 8,
-    opacity: 0.22,
+    color: "#071018",
+    weight: 10,
+    opacity: 0.74,
     lineCap: "round",
     lineJoin: "round"
   }).addTo(activeRouteLayer);
@@ -238,7 +252,8 @@ function hotelCard(hotel) {
 }
 
 function focusDay(day, options = {}) {
-  const bounds = L.latLngBounds(day.stops.map((stop) => [stop.lat, stop.lng]));
+  renderActiveRoute(day);
+  const bounds = L.latLngBounds(getRoutePoints(day));
   map.fitBounds(bounds, {
     paddingTopLeft: [30, options.padding ? 70 : 90],
     paddingBottomRight: [30, 46],
@@ -247,19 +262,50 @@ function focusDay(day, options = {}) {
 }
 
 function fitAll() {
-  map.fitBounds(L.latLngBounds(allStops), {
+  activeRouteLayer.clearLayers();
+  renderOverviewMarkers();
+  map.fitBounds(L.latLngBounds(allRoutePoints), {
     paddingTopLeft: [38, 78],
     paddingBottomRight: [38, 48],
     maxZoom: 8
   });
 }
 
+function renderOverviewMarkers() {
+  markerLayer.clearLayers();
+  routeData.forEach((day, index) => {
+    const start = day.stops[0];
+    const position = offsetDuplicate(start, index, routeData.map((item) => item.stops[0]));
+    const color = colors[(day.day - 1) % colors.length];
+    const marker = L.marker(position, {
+      icon: overviewIcon(day.day, color),
+      keyboard: true,
+      title: `Tag ${day.day}: ${day.title}`
+    }).addTo(markerLayer);
+
+    marker.bindPopup(`
+      <strong>Tag ${day.day} · ${escapeHtml(day.title)}</strong>
+      <span>${escapeHtml(day.distance)} · ${escapeHtml(day.focus)}</span>
+    `);
+  });
+}
+
 function numberedIcon(dayNumber, stopNumber, color) {
   return L.divIcon({
     className: "numbered-marker-wrap",
-    html: `<div class="numbered-marker" style="--marker-color:${color}"><span>${dayNumber}</span><small>${stopNumber}</small></div>`,
-    iconSize: [38, 44],
-    iconAnchor: [19, 39],
+    html: `<div class="map-pin" style="--marker-color:${color}"><span>${stopNumber}</span></div>`,
+    iconSize: [34, 46],
+    iconAnchor: [17, 43],
+    popupAnchor: [0, -38]
+  });
+}
+
+function overviewIcon(dayNumber, color) {
+  return L.divIcon({
+    className: "numbered-marker-wrap",
+    html: `<div class="map-pin overview-pin" style="--marker-color:${color}"><span>${dayNumber}</span></div>`,
+    iconSize: [32, 44],
+    iconAnchor: [16, 41],
     popupAnchor: [0, -36]
   });
 }
@@ -269,6 +315,13 @@ function offsetDuplicate(stop, index, stops) {
   if (!sameBefore) return [stop.lat, stop.lng];
   const offset = 0.012 * sameBefore;
   return [stop.lat + offset, stop.lng + offset];
+}
+
+function getRoutePoints(day) {
+  if (routeGeometryData[day.day]) {
+    return routeGeometryData[day.day];
+  }
+  return day.stops.map((stop) => [stop.lat, stop.lng]);
 }
 
 function googleRouteLink(day) {
