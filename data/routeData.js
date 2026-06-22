@@ -344,6 +344,107 @@ const routeData = [
   }
 ];
 
+compressRouteToNineDays();
+
+function compressRouteToNineDays() {
+  const original = [...routeData];
+  const byDay = new Map(original.map((day) => [day.day, day]));
+  const firstSix = original.slice(0, 6).map((day) => ({ ...day }));
+
+  routeData.splice(
+    0,
+    routeData.length,
+    ...firstSix,
+    combineDays(byDay, {
+      day: 7,
+      sourceDays: [7, 8],
+      title: "Caen → Tours/Loire",
+      distance: "ca. 445 km",
+      curveFactor: 4,
+      description: "Kompakter Rückreisebogen ab Caen: Bocage, Suisse Normande, Le Mans und Loire-Orte bis Tours in einer langen Etappe.",
+      focus: "Bocage, Le Mans, Loire",
+      riderNotes: [
+        "Langer Fahrtag durch die 9-Tage-Planung: sehr früh starten und Pausen strikt einplanen.",
+        "Le Mans nur als Durchfahrts- oder Kaffeestopp nutzen, damit Tours realistisch bleibt.",
+        "Bei Müdigkeit optional in Le Mans übernachten und die Reise wieder entzerren."
+      ],
+      highlights: ["Bayeux", "Saint-Lô", "Domfront", "Alençon", "Le Mans", "Saumur", "Tours"],
+      hotelsFrom: 8
+    }),
+    combineDays(byDay, {
+      day: 8,
+      sourceDays: [9, 10],
+      title: "Tours → Dijon",
+      distance: "ca. 515 km",
+      curveFactor: 4,
+      description: "Großer Südostbogen über Berry, Sancerre, Nevers und den Morvan bis Dijon. Viele schöne Stopps, aber als 9-Tage-Version ein sehr langer Tag.",
+      focus: "Sancerre, Nevers, Morvan, Dijon",
+      riderNotes: [
+        "Das ist der längste Kompromisstag der 9-Tage-Version.",
+        "Sancerre oder Nevers als feste Mittagspause setzen und den Morvan nur bei genug Energie kurvig ausfahren.",
+        "Wenn es zu viel wird: Nevers als Zwischenübernachtung einplanen."
+      ],
+      highlights: ["Loches", "Valençay", "Sancerre", "Nevers", "Lac des Settons", "Beaune", "Dijon"],
+      hotelsFrom: 10
+    }),
+    combineDays(byDay, {
+      day: 9,
+      sourceDays: [11, 12, 13, 14],
+      title: "Dijon → Basel",
+      distance: "ca. 560 km",
+      curveFactor: 5,
+      description: "Finale Rückfahrt über Jura, Südvogesen, Colmar, Kaiserstuhl, Schauinsland und Markgräflerland nach Basel. Freiburg ist als eigener Anschluss entfernt.",
+      focus: "Jura, Südvogesen, Colmar, Basel",
+      riderNotes: [
+        "Freiburg ist nicht mehr als eigener Stopp oder Übernachtungsort enthalten.",
+        "Sehr langer Abschlusstag: bei Wetter, Müdigkeit oder Verkehr besser ab Colmar direkter nach Basel kürzen.",
+        "Die schönen Kurvenpunkte bleiben als Orientierung erhalten."
+      ],
+      highlights: ["Dole", "Arbois", "Pontarlier", "Ballon d'Alsace", "Colmar", "Breisach", "Schauinsland", "Basel"],
+      hotelsFrom: 14,
+      removeStopNames: ["Freiburg"]
+    })
+  );
+}
+
+function combineDays(byDay, config) {
+  const sourceDays = config.sourceDays.map((dayNumber) => byDay.get(dayNumber)).filter(Boolean);
+  const removeStopNames = new Set((config.removeStopNames || []).map((name) => normalizeRouteName(name)));
+  const stops = [];
+
+  sourceDays.forEach((day) => {
+    day.stops.forEach((stop) => {
+      if (removeStopNames.has(normalizeRouteName(stop.name))) return;
+      const previous = stops[stops.length - 1];
+      if (previous && normalizeRouteName(previous.name) === normalizeRouteName(stop.name)) return;
+      stops.push(stop);
+    });
+  });
+
+  return {
+    day: config.day,
+    title: config.title,
+    distance: config.distance,
+    countries: [...new Set(sourceDays.flatMap((day) => day.countries))],
+    curveFactor: config.curveFactor,
+    description: config.description,
+    focus: config.focus,
+    riderNotes: config.riderNotes,
+    highlights: config.highlights,
+    stops,
+    hotels: byDay.get(config.hotelsFrom)?.hotels || sourceDays[sourceDays.length - 1]?.hotels || []
+  };
+}
+
+function normalizeRouteName(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 function stop(name, address, lat, lng) {
   return {
     name,

@@ -56,7 +56,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=9");
+    const response = await fetch("./data/routeGeometry.json?v=10");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
@@ -174,7 +174,7 @@ function getPrintOptions() {
 }
 
 function renderPrintView(days, options) {
-  const scopeText = days.length === routeData.length ? "Alle 14 Tage" : days.map((day) => `Tag ${day.day}`).join(", ");
+  const scopeText = days.length === routeData.length ? `Alle ${routeData.length} Tage` : days.map((day) => `Tag ${day.day}`).join(", ");
   return `
     <div class="print-document">
       <header class="print-title">
@@ -540,10 +540,22 @@ function offsetDuplicate(stop, index, stops) {
 }
 
 function getRoutePoints(day) {
-  if (routeGeometryData[day.day]) {
+  if (routeGeometryData[day.day] && geometryMatchesDay(day, routeGeometryData[day.day])) {
     return routeGeometryData[day.day];
   }
   return day.stops.map((stop) => [stop.lat, stop.lng]);
+}
+
+function geometryMatchesDay(day, points) {
+  if (!Array.isArray(points) || points.length < 2) return false;
+  const start = day.stops[0];
+  const end = day.stops[day.stops.length - 1];
+  return pointsNearStop(points[0], start) && pointsNearStop(points[points.length - 1], end);
+}
+
+function pointsNearStop(point, stop) {
+  if (!point || !stop) return false;
+  return Math.abs(Number(point[0]) - stop.lat) < 0.08 && Math.abs(Number(point[1]) - stop.lng) < 0.08;
 }
 
 function googleRouteLink(day) {
