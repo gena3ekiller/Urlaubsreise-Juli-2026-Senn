@@ -729,7 +729,7 @@ function renderPlaceResult(card, place, fallbackName, kind) {
   const slidesId = `slides-${Math.random().toString(36).slice(2)}`;
   card.innerHTML = `
     <div class="photo-carousel" id="${slidesId}" tabindex="0" aria-label="Google Fotos ${escapeHtml(name)}">
-      ${photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(name)} Foto ${index + 1}" loading="lazy" referrerpolicy="no-referrer" />`).join("")}
+      ${photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(name)} Foto ${index + 1}" loading="lazy" referrerpolicy="origin-when-cross-origin" />`).join("")}
     </div>
     ${photos.length > 1 ? `
       <button class="photo-nav photo-prev" type="button" aria-label="Vorheriges Foto">‹</button>
