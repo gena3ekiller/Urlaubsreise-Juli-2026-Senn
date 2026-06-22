@@ -11,6 +11,7 @@ const els = {
   printMenu: document.querySelector("#printMenu"),
   printScope: document.querySelector("#printScope"),
   printDayPicker: document.querySelector("#printDayPicker"),
+  mapToggle: document.querySelector("#mapToggleBtn"),
   placeModal: document.querySelector("#placeModal"),
   placeModalBody: document.querySelector("#placeModalBody")
 };
@@ -56,7 +57,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=10");
+    const response = await fetch("./data/routeGeometry.json?v=11");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
@@ -76,6 +77,7 @@ function bindEvents() {
   els.showAll.addEventListener("click", fitAll);
   els.showAllMobile.addEventListener("click", fitAll);
   els.focusDay.addEventListener("click", () => focusDay(activeDay));
+  els.mapToggle.addEventListener("click", toggleMapPanel);
   els.printMenuButton.addEventListener("click", togglePrintMenu);
   els.printRoute.addEventListener("click", printRouteSelection);
   els.printScope.addEventListener("change", () => {
@@ -100,6 +102,20 @@ function bindEvents() {
       focusDay(activeDay, { padding: true });
     }, 140);
   });
+}
+
+function toggleMapPanel() {
+  const collapsed = document.body.classList.toggle("map-collapsed");
+  els.mapToggle.setAttribute("aria-pressed", String(collapsed));
+  els.mapToggle.setAttribute("aria-label", collapsed ? "Karte aufklappen" : "Karte einklappen");
+  els.mapToggle.setAttribute("title", collapsed ? "Karte aufklappen" : "Karte einklappen");
+  els.mapToggle.textContent = collapsed ? "▣" : "▤";
+  if (!collapsed) {
+    window.setTimeout(() => {
+      map.invalidateSize();
+      focusDay(activeDay, { padding: true });
+    }, 120);
+  }
 }
 
 
@@ -427,9 +443,10 @@ function stopCard(stop, index, dayNumber) {
 }
 
 function hotelCard(hotel) {
+  const story = hotelStory(hotel);
   return `
     <article class="hotel-card">
-      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-google="${hotel.links.google}" data-place-apple="${hotel.links.apple}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
+      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-apple="${hotel.links.apple}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -463,7 +480,7 @@ function hotelCard(hotel) {
 function usaSpotCard(spot) {
   return `
     <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(spot.name)} öffnen">
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-google="${spot.links.google}" data-place-apple="${spot.links.apple}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-apple="${spot.links.apple}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -484,6 +501,7 @@ function usaSpotCard(spot) {
 }
 
 function mealCard(meal) {
+  const story = mealStory(meal);
   return `
     <article class="meal-card">
       <div class="meal-time">
@@ -492,7 +510,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-google="${meal.google}" data-place-apple="${meal.apple}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-apple="${meal.apple}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -681,10 +699,62 @@ function matchingHighlightStop(day, name, index) {
   return day.stops[Math.min(index + 1, day.stops.length - 1)];
 }
 
+function hotelStory(hotel) {
+  return [
+    `${hotel.name} ist hier als Etappenhotel gesetzt, weil die Lage in ${hotel.area} nach einem Fahrtag praktisch bleibt und die Anfahrt nicht unnötig kompliziert werden soll.`,
+    `Für Motorradfahrer zählt vor allem: ${hotel.parking}`,
+    `Der konkrete Vorteil ist: ${hotel.pro} Der mögliche Haken: ${hotel.con}`,
+    "Bewertung, Preis und Fotos werden live über Google geprüft, damit die Seite nicht mit Symbolbildern arbeitet."
+  ].join(" ");
+}
+
+function mealStory(meal) {
+  const timing = meal.label === "Frühstück"
+    ? "Der Vorschlag liegt bewusst früh in der Etappe, damit die Gruppe satt startet und nicht erst nach vielen Kilometern suchen muss."
+    : meal.label === "Mittag"
+      ? "Der Vorschlag liegt ungefähr in der Tagesmitte, damit Essen, Trinken und eine ruhige Pause zusammenfallen."
+      : "Der Vorschlag liegt am Zielort oder sehr nah am Abendziel, damit nach Hotel-Check-in nicht noch einmal lange gefahren werden muss.";
+  return `${timing} ${meal.note} Der Suchpunkt ist ${meal.place}; die Karte öffnet passende Cafés, Restaurants oder Diner im direkten Umfeld.`;
+}
+
+function placeStory(name, kind, note) {
+  const lower = `${name} ${kind}`.toLowerCase();
+  const known = {
+    ramstein: "Ramstein ist hier nicht als Basisbesuch geplant, sondern als USA-geprägter Abendstopp rund um Landstuhl und Kaiserslautern. Ohne Militärzugang bleiben Diner, BBQ, Shops und öffentliche Orte im Umfeld die spannenden Punkte.",
+    kaiserslautern: "Kaiserslautern passt für den USA-Fan in der Gruppe, weil die Stadt durch die US-Community geprägt ist und sich Diner, Burger, BBQ und entspannte Abendstopps gut kombinieren lassen.",
+    landstuhl: "Landstuhl ist als Übernachtungsraum ideal, weil es nah bei Ramstein liegt, aber mit Hotels und Restaurants öffentlich zugänglich bleibt.",
+    nancy: "Nancy ist ein guter Kulturstopp auf der Ost-West-Achse: Place Stanislas, Altstadt und Cafés funktionieren auch dann, wenn man nur eine begrenzte Pause einplant.",
+    reims: "Reims bringt Kathedrale, Champagner und breite Boulevards in die Route. Für die Gruppe ist es ein guter Abschluss nach den Argonnen, ohne noch bis Paris zu müssen.",
+    rouen: "Rouen ist ein starker Normandie-Einstieg mit Altstadt, Fachwerk und Seine. Die Stadt liegt günstig, bevor es am nächsten Tag ruhiger Richtung Caen geht.",
+    caen: "Caen ist die ruhige Basis für die D-Day-Runde. Von hier aus lassen sich Museen, Küstenabschnitte und Friedhöfe erreichen, ohne täglich das Hotel wechseln zu müssen.",
+    "omaha beach": "Omaha Beach ist einer der zentralen D-Day-Orte. Der Stopp ist emotional, aber wichtig, weil er die Landungsgeschichte direkt am Gelände sichtbar macht.",
+    "arromanches": "Arromanches zeigt mit den Resten des künstlichen Hafens sehr anschaulich, wie die Versorgung nach der Landung funktionierte.",
+    "pegasus bridge": "Pegasus Bridge ist ein kompakter, gut verständlicher Geschichtsstopp und eignet sich besonders gut, wenn die Gruppe nicht zu lange laufen möchte.",
+    "le mans": "Le Mans ist als Zwischenziel sinnvoll, weil es die Normandie-Etappe entspannt beendet und gleichzeitig Altstadt, Gastronomie und Motorsportgeschichte bietet.",
+    tours: "Tours ist ein guter Loire-Pausenpunkt mit vielen Optionen für Essen und Kaffee, ohne sich tief in Schlossbesichtigungen zu verlieren.",
+    sancerre: "Sancerre ist ein schöner später Pausenpunkt mit Blicken, Weinbergen und kleinen Straßen. Für Motorradfahrer ist die Anfahrt meist reizvoller als ein reiner Autobahnzubringer.",
+    nevers: "Nevers ist als Übernachtung praktisch, weil es die lange Loire/Jura-Rückfahrt teilt und die Altstadt abends noch gut zu Fuß funktioniert.",
+    dijon: "Dijon ist das letzte große französische Ziel vor der Heimfahrt: Altstadt, Essen und übersichtliche Hotels machen den Abend planbar.",
+    besançon: "Besançon liegt ideal auf dem direkten Rückweg nach Basel. Die Schleife am Doubs und die Zitadelle geben der Pause Substanz, ohne die Route zu zerreißen.",
+    pontarlier: "Pontarlier ist ein sinnvoller Jura-Stopp, weil danach die letzte Etappe Richtung Schweiz konzentriert gefahren werden kann.",
+    morteau: "Morteau steht für den französischen Jura: kleinere Straßen, Höhenzüge und eine gute letzte Pause vor der Heimfahrt.",
+    basel: "Basel ist bewusst als direkter Zielpunkt gesetzt. Am letzten Tag wird nicht mehr über Freiburg, Colmar oder Ballon d'Alsace verlängert.",
+    diner: "Dieser Stopp ist für den USA-Fan gedacht: unkompliziertes Essen, amerikanischer Stil und genug Atmosphäre, ohne dass Militärbasis-Zugang nötig ist.",
+    bbq: "BBQ passt besonders gut zum Ramstein-Abend, weil es den US-Bezug aufgreift und nach einem langen Fahrtag unkompliziert funktioniert.",
+    burger: "Burger/Diner ist hier bewusst als einfache, gruppentaugliche Abendoption gesetzt: wenig formell, gut planbar und passend zum USA-Thema."
+  };
+  const match = Object.keys(known).find((key) => lower.includes(key));
+  const base = match
+    ? known[match]
+    : `${name} ist als Stopp eingeplant, weil er nahe an der Tagesroute liegt und eine sinnvolle Pause mit Orientierung, Essen oder kurzer Besichtigung ermöglicht.`;
+  return `${base} ${note || ""}`.trim();
+}
+
 function attractionCard(attraction) {
+  const story = placeStory(attraction.name, "attraction", attraction.note);
   return `
     <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(attraction.name)} öffnen">
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-google="${attraction.google}" data-place-apple="${attraction.apple}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-apple="${attraction.apple}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -873,6 +943,7 @@ function normalizePlaceResult(card, place, fallbackName, kind) {
     photos,
     kind,
     note: card.dataset.placeNote || "",
+    story: card.dataset.placeStory || "",
     area: card.dataset.placeAddress || "",
     lat: Number.isFinite(placeLat) ? placeLat : card.dataset.placeLat || "",
     lng: Number.isFinite(placeLng) ? placeLng : card.dataset.placeLng || "",
@@ -890,6 +961,7 @@ function openPlaceModal(card) {
     price: "Preis live prüfen",
     photos: [],
     note: card.dataset.placeNote || "",
+    story: card.dataset.placeStory || "",
     area: card.dataset.placeAddress || "",
     lat: card.dataset.placeLat || "",
     lng: card.dataset.placeLng || "",
@@ -934,6 +1006,12 @@ function renderPlaceModalContent(data) {
         <span>${escapeHtml(data.price)}</span>
       </div>
       ${data.note ? `<p>${escapeHtml(data.note)}</p>` : ""}
+      ${data.story ? `
+        <div class="modal-story">
+          <span>Einordnung</span>
+          <p>${escapeHtml(data.story)}</p>
+        </div>
+      ` : ""}
       ${hasLocation ? `
         <div class="modal-location">
           <span>Standort</span>

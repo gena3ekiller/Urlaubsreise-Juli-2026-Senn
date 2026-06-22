@@ -7,7 +7,7 @@
     <title>Motorradroute Basel - Caen</title>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css?v=16" />
+    <link rel="stylesheet" href="./style.css?v=17" />
   </head>
   <body>
     <div class="app-shell">
@@ -18,6 +18,7 @@
             <h1>Basel → Caen → Basel</h1>
           </div>
           <div class="brand-actions">
+            <button class="icon-button" id="mapToggleBtn" type="button" title="Karte einklappen" aria-label="Karte einklappen" aria-pressed="false">▤</button>
             <button class="icon-button" id="printMenuBtn" type="button" title="Drucken" aria-label="Drucken" aria-expanded="false">⎙</button>
             <button class="icon-button" id="showAllMobile" type="button" title="Alles anzeigen" aria-label="Alles anzeigen">↗</button>
           </div>
@@ -31,7 +32,7 @@
         <div class="trip-summary">
           <div><strong>3</strong><span>Länder</span></div>
           <div><strong>9</strong><span>Etappen</span></div>
-          <div><strong>~2.970</strong><span>km</span></div>
+          <div><strong>~2.680</strong><span>km</span></div>
         </div>
 
         <section class="print-tools" id="printMenu" aria-label="Druckoptionen" hidden>
@@ -93,8 +94,8 @@
     <section class="print-area" id="printArea" aria-hidden="true"></section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="./data/routeData.js?v=11"></script>
+    <script src="./data/routeData.js?v=12"></script>
     <script src="./data/googleConfig.js?v=1"></script>
-    <script src="./app.js?v=23"></script>
+    <script src="./app.js?v=24"></script>
   </body>
 </html>

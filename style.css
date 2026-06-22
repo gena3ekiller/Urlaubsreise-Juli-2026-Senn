@@ -245,6 +245,14 @@ h4 {
   overflow: hidden;
 }
 
+body.map-collapsed .main-panel {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+body.map-collapsed .map-panel {
+  display: none;
+}
+
 .map-panel,
 .details-panel {
   border: 1px solid var(--line);
@@ -842,6 +850,10 @@ h4 {
     display: flex;
     flex-direction: column;
     overflow: visible;
+  }
+
+  body.map-collapsed .main-panel {
+    display: flex;
   }
 
   .map-panel {
@@ -1785,6 +1797,31 @@ body.modal-open {
   color: var(--soft);
   padding: 8px 11px;
   font-weight: 850;
+}
+
+.modal-story {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(255, 184, 77, 0.22);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(255, 184, 77, 0.09), rgba(84, 214, 255, 0.06)),
+    rgba(255, 255, 255, 0.04);
+  padding: 13px 14px;
+}
+
+.modal-story span {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.modal-story p {
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.5;
 }
 
 .modal-location {

@@ -358,62 +358,157 @@ compressRouteToNineDays();
 function compressRouteToNineDays() {
   const original = [...routeData];
   const byDay = new Map(original.map((day) => [day.day, day]));
-  const firstSix = original.slice(0, 6).map((day) => ({ ...day }));
 
   routeData.splice(
     0,
     routeData.length,
-    ...firstSix,
-    combineDays(byDay, {
+    cloneDay(byDay.get(1), 1),
+    {
+      day: 2,
+      title: "Ramstein/Landstuhl → Reims",
+      distance: "ca. 325 km",
+      countries: ["Deutschland", "Frankreich"],
+      curveFactor: 4,
+      description: "Zweiter längerer Fahrtag von Ramstein über Saarbrücken, Metz, Verdun und die Argonnen nach Reims. Nancy wird bewusst nicht mehr als großer Routenschlenker gefahren, damit die Etappe unter der Schmerzgrenze bleibt.",
+      focus: "Saarland, Metz, Verdun, Reims",
+      riderNotes: [
+        "Früh losfahren, weil Verdun und Reims beide lohnende, aber kurze Stopps sind.",
+        "Mittag ideal im Raum Metz oder Verdun, danach ruhig über Sainte-Menehould Richtung Champagne rollen.",
+        "Nancy bleibt wegen der 9-Tage-Kompression bewusst draußen; der Umweg würde die Etappe deutlich über 370 km ziehen."
+      ],
+      highlights: ["Saarbrücken", "Metz", "Verdun", "Sainte-Menehould", "Reims"],
+      stops: [
+        stop("Ramstein-Miesenbach", "Ramstein-Miesenbach, Deutschland", 49.4447, 7.5540),
+        stop("Landstuhl", "Landstuhl, Deutschland", 49.4137, 7.5706),
+        stop("Saarbrücken", "Saarbrücken, Deutschland", 49.2402, 6.9969),
+        stop("Metz", "Metz, Frankreich", 49.1193, 6.1757),
+        stop("Verdun", "Verdun, Frankreich", 49.1598, 5.3828),
+        stop("Sainte-Menehould", "Sainte-Menehould, Frankreich", 49.0902, 4.8970),
+        stop("Reims", "Reims, Frankreich", 49.2583, 4.0317)
+      ],
+      hotels: byDay.get(3).hotels
+    },
+    cloneDay(byDay.get(4), 3, {
+      title: "Reims → Rouen"
+    }),
+    cloneDay(byDay.get(5), 4, {
+      title: "Rouen → Caen"
+    }),
+    cloneDay(byDay.get(6), 5, {
+      title: "Caen D-Day Runde"
+    }),
+    {
+      day: 6,
+      title: "Caen → Saumur",
+      distance: "ca. 365 km",
+      countries: ["Frankreich"],
+      curveFactor: 4,
+      description: "Der längere Rückweg beginnt nach der D-Day-Runde: Bocage, Domfront, Alençon, Le Mans und weiter an die Loire bis Saumur.",
+      focus: "Bocage, Le Mans, Loire, Saumur",
+      riderNotes: [
+        "Schmerzgrenze-Tag: früh starten und Le Mans eher als kompakte Mittagspause planen.",
+        "Der Abschnitt zieht Kilometer vor, damit die letzten Tage nicht auf 500 km anwachsen.",
+        "Saumur ist ein guter Abendort, weil Hotel, Essen und Loire-Spaziergang nah beieinander liegen."
+      ],
+      highlights: ["Bayeux", "Saint-Lô", "Domfront", "Alençon", "Le Mans", "Saumur"],
+      stops: [
+        stop("Caen", "Caen, Frankreich", 49.1829, -0.3707),
+        stop("Bayeux", "Bayeux, Frankreich", 49.2766, -0.7025),
+        stop("Saint-Lô", "Saint-Lô, Frankreich", 49.1156, -1.0907),
+        stop("Domfront", "Domfront en Poiraie, Frankreich", 48.5946, -0.6451),
+        stop("Alençon", "Alençon, Frankreich", 48.4329, 0.0913),
+        stop("Le Mans", "Le Mans, Frankreich", 48.0061, 0.1996),
+        stop("La Flèche", "La Flèche, Frankreich", 47.6985, -0.0755),
+        stop("Saumur", "Saumur, Frankreich", 47.2601, -0.0760)
+      ],
+      hotels: [
+        hotel("Hôtel Anne d'Anjou", "Saumur Loireufer", "32 Quai Mayaud, Saumur", 47.2593, -0.0731, "Öffentliche Parkplätze/Hotel vorab prüfen.", "Sehr schöner Abendstandort direkt an der Loire.", "Zentrale Lage kann bei Gepäck etwas enger sein."),
+        hotel("The Originals Boutique Hôtel Le Londres", "Saumur Zentrum", "48 Rue d'Orléans, Saumur", 47.2606, -0.0781, "Garage/Parkmöglichkeit vor Reservierung klären.", "Praktisch für Altstadt und Restaurants zu Fuß.", "Innenstadtverkehr beim Ankommen beachten."),
+        hotel("Ibis Styles Saumur Gare Centre", "Saumur Bahnhof", "15 Avenue David d'Angers, Saumur", 47.2684, -0.0710, "Parkplätze in der Umgebung gut planbar.", "Einfache Anfahrt nach einem langen Tag.", "Weniger romantisch als Loireufer/Altstadt.")
+      ]
+    },
+    {
       day: 7,
-      sourceDays: [7, 8],
-      title: "Caen → Tours/Loire",
-      distance: "ca. 445 km",
+      title: "Saumur → Nevers",
+      distance: "ca. 350 km",
+      countries: ["Frankreich"],
       curveFactor: 4,
-      description: "Kompakter Rückreisebogen ab Caen: Bocage, Suisse Normande, Le Mans und Loire-Orte bis Tours in einer langen Etappe.",
-      focus: "Bocage, Le Mans, Loire",
+      description: "Loire-Tag mit Saumur, Chinon, Azay-le-Rideau, Tours, Valençay und Sancerre bis Nevers. Viele Orte bleiben bewusst kurze Stopps, damit die Etappe fahrbar bleibt.",
+      focus: "Loire, Châteaux, Sancerre, Nevers",
       riderNotes: [
-        "Langer Fahrtag durch die 9-Tage-Planung: sehr früh starten und Pausen strikt einplanen.",
-        "Le Mans nur als Durchfahrts- oder Kaffeestopp nutzen, damit Tours realistisch bleibt.",
-        "Bei Müdigkeit optional in Le Mans übernachten und die Reise wieder entzerren."
+        "Maximal-Tag: Frühstück früh in Saumur, Mittag im Raum Tours/Loches.",
+        "Chinon und Azay-le-Rideau als Fotostopps behandeln, nicht beide lang ausdehnen.",
+        "Sancerre ist der schönste späte Pausenpunkt vor Nevers."
       ],
-      highlights: ["Bayeux", "Saint-Lô", "Domfront", "Alençon", "Le Mans", "Saumur", "Tours"],
-      hotelsFrom: 8
-    }),
-    combineDays(byDay, {
+      highlights: ["La Flèche", "Saumur", "Tours", "Valençay", "Sancerre", "Nevers"],
+      stops: [
+        stop("Saumur", "Saumur, Frankreich", 47.2601, -0.0760),
+        stop("Chinon", "Chinon, Frankreich", 47.1663, 0.2427),
+        stop("Azay-le-Rideau", "Azay-le-Rideau, Frankreich", 47.2606, 0.4669),
+        stop("Tours", "Tours, Frankreich", 47.3941, 0.6848),
+        stop("Loches", "Loches, Frankreich", 47.1287, 0.9962),
+        stop("Valençay", "Valençay, Frankreich", 47.1627, 1.5639),
+        stop("Sancerre", "Sancerre, Frankreich", 47.3305, 2.8397),
+        stop("Nevers", "Nevers, Frankreich", 46.9896, 3.1590)
+      ],
+      hotels: byDay.get(9).hotels
+    },
+    {
       day: 8,
-      sourceDays: [9, 10],
-      title: "Tours → Dijon",
-      distance: "ca. 515 km",
-      curveFactor: 4,
-      description: "Großer Südostbogen über Berry, Sancerre, Nevers und den Morvan bis Dijon. Viele schöne Stopps, aber als 9-Tage-Version ein sehr langer Tag.",
-      focus: "Sancerre, Nevers, Morvan, Dijon",
-      riderNotes: [
-        "Das ist der längste Kompromisstag der 9-Tage-Version.",
-        "Sancerre oder Nevers als feste Mittagspause setzen und den Morvan nur bei genug Energie kurvig ausfahren.",
-        "Wenn es zu viel wird: Nevers als Zwischenübernachtung einplanen."
-      ],
-      highlights: ["Loches", "Valençay", "Sancerre", "Nevers", "Lac des Settons", "Beaune", "Dijon"],
-      hotelsFrom: 10
-    }),
-    combineDays(byDay, {
-      day: 9,
-      sourceDays: [11, 12, 13, 14],
-      title: "Dijon → Basel",
-      distance: "ca. 560 km",
+      title: "Nevers → Besançon",
+      distance: "ca. 345 km",
+      countries: ["Frankreich"],
       curveFactor: 5,
-      description: "Finale Rückfahrt über Jura, Südvogesen, Colmar, Kaiserstuhl, Schauinsland und Markgräflerland nach Basel. Freiburg ist als eigener Anschluss entfernt.",
-      focus: "Jura, Südvogesen, Colmar, Basel",
+      description: "Vom Burgund in den Jura: Nevers, Dijon, Dole, Arbois, Salins-les-Bains und Ornans bis Besançon. Der Tag zieht den Jura vor, damit Tag 9 entspannt nach Basel führt.",
+      focus: "Burgund, Jura, Besançon",
       riderNotes: [
-        "Freiburg ist nicht mehr als eigener Stopp oder Übernachtungsort enthalten.",
-        "Sehr langer Abschlusstag: bei Wetter, Müdigkeit oder Verkehr besser ab Colmar direkter nach Basel kürzen.",
-        "Die schönen Kurvenpunkte bleiben als Orientierung erhalten."
+        "Dijon als längere Kaffeepause oder frühes Mittagessen einplanen, nicht als ganzer Stadttag.",
+        "Arbois und Salins-les-Bains bringen kleine Straßen und Jura-Charakter in die Etappe.",
+        "Besançon ist der bessere letzte französische Übernachtungsort als eine überlange Heimfahrt."
       ],
-      highlights: ["Dole", "Arbois", "Pontarlier", "Ballon d'Alsace", "Colmar", "Breisach", "Schauinsland", "Basel"],
-      hotelsFrom: 14,
-      removeStopNames: ["Freiburg"]
-    })
+      highlights: ["Dijon", "Dole", "Arbois", "Salins-les-Bains", "Ornans", "Besançon"],
+      stops: [
+        stop("Nevers", "Nevers, Frankreich", 46.9896, 3.1590),
+        stop("Dijon", "Dijon, Frankreich", 47.3220, 5.0415),
+        stop("Dole", "Dole, Frankreich", 47.0921, 5.4899),
+        stop("Arbois", "Arbois, Frankreich", 46.9030, 5.7740),
+        stop("Salins-les-Bains", "Salins-les-Bains, Frankreich", 46.9402, 5.8777),
+        stop("Ornans", "Ornans, Frankreich", 47.1065, 6.1431),
+        stop("Besançon", "Besançon, Frankreich", 47.2378, 6.0241)
+      ],
+      hotels: byDay.get(11).hotels
+    },
+    {
+      day: 9,
+      title: "Besançon → Basel",
+      distance: "ca. 215 km",
+      countries: ["Frankreich", "Schweiz"],
+      curveFactor: 4,
+      description: "Direkter Abschlusstag aus Besançon nach Basel über Pontarlier und Morteau. Ohne Colmar, Freiburg, Guebwiller, Ballon d'Alsace oder zusätzliche Elsass-Schleife.",
+      focus: "Pontarlier, Morteau, direkter Weg nach Basel",
+      riderNotes: [
+        "Kurzer Heimtag: bewusst ohne Colmar, Freiburg, Guebwiller und Ballon d'Alsace.",
+        "Pontarlier oder Morteau als letzte entspannte Pause wählen, danach direkt Richtung Basel.",
+        "Wenn alle müde sind, kann der Kurvenanteil weiter reduziert werden, ohne das Ziel zu gefährden."
+      ],
+      highlights: ["Besançon", "Pontarlier", "Morteau", "Basel"],
+      stops: [
+        stop("Besançon", "Besançon, Frankreich", 47.2378, 6.0241),
+        stop("Pontarlier", "Pontarlier, Frankreich", 46.9035, 6.3542),
+        stop("Morteau", "Morteau, Frankreich", 47.0579, 6.6076),
+        stop("Basel", "Basel, Schweiz", 47.5596, 7.5886)
+      ],
+      hotels: byDay.get(14).hotels
+    }
   );
+}
+
+function cloneDay(day, newDay, overrides = {}) {
+  return {
+    ...day,
+    ...overrides,
+    day: newDay
+  };
 }
 
 function combineDays(byDay, config) {
