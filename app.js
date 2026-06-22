@@ -4,7 +4,11 @@ const els = {
   search: document.querySelector("#searchInput"),
   showAll: document.querySelector("#showAllBtn"),
   showAllMobile: document.querySelector("#showAllMobile"),
-  focusDay: document.querySelector("#focusDayBtn")
+  focusDay: document.querySelector("#focusDayBtn"),
+  printArea: document.querySelector("#printArea"),
+  printRoute: document.querySelector("#printRouteBtn"),
+  printScope: document.querySelector("#printScope"),
+  printDayPicker: document.querySelector("#printDayPicker")
 };
 
 const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166", "#47e5bc"];
@@ -35,6 +39,7 @@ activeRouteLayer.addTo(map);
 async function init() {
   await loadRouteGeometry();
   renderDayList(routeData);
+  renderPrintDayPicker();
   renderAllRoutes();
   selectDay(1, { fit: false });
   fitAll();
@@ -63,6 +68,10 @@ function bindEvents() {
   els.showAll.addEventListener("click", fitAll);
   els.showAllMobile.addEventListener("click", fitAll);
   els.focusDay.addEventListener("click", () => focusDay(activeDay));
+  els.printRoute.addEventListener("click", printRouteSelection);
+  els.printScope.addEventListener("change", () => {
+    els.printDayPicker.classList.toggle("visible", els.printScope.value === "custom");
+  });
 
   window.addEventListener("resize", () => {
     window.setTimeout(() => {
@@ -94,6 +103,96 @@ function renderDayList(days) {
     button.addEventListener("click", () => selectDay(day.day));
     els.dayList.appendChild(button);
   });
+}
+
+function renderPrintDayPicker() {
+  els.printDayPicker.innerHTML = routeData.map((day) => `
+    <label>
+      <input type="checkbox" value="${day.day}" checked />
+      <span>Tag ${day.day}</span>
+    </label>
+  `).join("");
+}
+
+function printRouteSelection() {
+  const days = getPrintDays();
+  if (!days.length) return;
+  const options = getPrintOptions();
+  els.printArea.innerHTML = renderPrintView(days, options);
+  els.printArea.setAttribute("aria-hidden", "false");
+  window.setTimeout(() => window.print(), 80);
+}
+
+function getPrintDays() {
+  if (els.printScope.value === "all") return routeData;
+  if (els.printScope.value === "custom") {
+    const selected = [...els.printDayPicker.querySelectorAll("input:checked")].map((input) => Number(input.value));
+    return routeData.filter((day) => selected.includes(day.day));
+  }
+  return [activeDay];
+}
+
+function getPrintOptions() {
+  return [...document.querySelectorAll("[data-print-option]")].reduce((options, input) => {
+    options[input.dataset.printOption] = input.checked;
+    return options;
+  }, {});
+}
+
+function renderPrintView(days, options) {
+  const scopeText = days.length === routeData.length ? "Alle 14 Tage" : days.map((day) => `Tag ${day.day}`).join(", ");
+  return `
+    <div class="print-document">
+      <header class="print-title">
+        <p>Motorradreise Juli 2026 · Basel - Caen - Basel</p>
+        <h1>${escapeHtml(scopeText)}</h1>
+        <span>Landstraßenroute mit Autobahnvermeidung · Stand ${new Date().toLocaleDateString("de-DE")}</span>
+      </header>
+      ${days.map((day) => renderPrintDay(day, options)).join("")}
+    </div>
+  `;
+}
+
+function renderPrintDay(day, options) {
+  return `
+    <article class="print-day">
+      <header>
+        <p>Tag ${day.day} · ${escapeHtml(day.countries.join(" / "))}</p>
+        <h2>${escapeHtml(day.title)}</h2>
+        <strong>${escapeHtml(day.distance)} · Kurven ${stars(day.curveFactor)}</strong>
+      </header>
+      <p>${escapeHtml(day.description)}</p>
+      ${day.note ? `<p class="print-warning">${escapeHtml(day.note)}</p>` : ""}
+      <dl class="print-facts">
+        <div><dt>Fokus</dt><dd>${escapeHtml(day.focus)}</dd></div>
+        <div><dt>Stopps</dt><dd>${day.stops.length}</dd></div>
+        <div><dt>Route</dt><dd>Autobahn/Maut vermeiden</dd></div>
+      </dl>
+      ${options.maps ? `<p class="print-map-link"><strong>Google Tagesroute:</strong> ${escapeHtml(googleRouteLink(day))}</p>` : ""}
+      ${options.meals ? printSection("Essen nach Fortschritt", mealPlan(day).map((meal) => `
+        <li><strong>${escapeHtml(meal.label)} ${escapeHtml(meal.time)}:</strong> ${escapeHtml(meal.title)} bei ${escapeHtml(meal.place)}. ${escapeHtml(meal.note)}${options.links ? `<br><span>${escapeHtml(meal.google)}</span>` : ""}</li>
+      `).join("")) : ""}
+      ${options.stops ? printSection("Stoppliste", day.stops.map((stop, index) => `
+        <li><strong>${day.day}.${index + 1} ${escapeHtml(stop.name)}</strong> - ${escapeHtml(stop.address)}${options.links ? `<br><span>${escapeHtml(stop.links.google)}</span>` : ""}</li>
+      `).join("")) : ""}
+      ${options.notes ? printSection("Highlights & Motorrad-Hinweise", [...day.highlights, ...day.riderNotes, ...(day.food || [])].map((item) => `<li>${escapeHtml(item)}</li>`).join("")) : ""}
+      ${options.hotels ? printSection("Hotelvorschläge", day.hotels.map((hotel) => `
+        <li>
+          <strong>${escapeHtml(hotel.name)}</strong> · ${escapeHtml(hotel.area)}<br>
+          ${escapeHtml(hotel.address)}<br>
+          ${options.prices ? `<span>${escapeHtml(hotel.priceRange)}</span><br>` : ""}
+          ${options.ratings ? `<span>${escapeHtml(hotel.rating)}</span><br>` : ""}
+          Parken: ${escapeHtml(hotel.parking)}<br>
+          Vorteil: ${escapeHtml(hotel.pro)} · Nachteil: ${escapeHtml(hotel.con)}
+          ${options.links ? `<br><span>${escapeHtml(hotel.links.google)}</span>` : ""}
+        </li>
+      `).join("")) : ""}
+    </article>
+  `;
+}
+
+function printSection(title, items) {
+  return `<section class="print-section"><h3>${escapeHtml(title)}</h3><ul>${items}</ul></section>`;
 }
 
 function renderAllRoutes() {

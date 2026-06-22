@@ -7,7 +7,7 @@
     <title>Motorradroute Basel - Caen</title>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css?v=9" />
+    <link rel="stylesheet" href="./style.css?v=10" />
   </head>
   <body>
     <div class="app-shell">
@@ -31,6 +31,38 @@
           <div><strong>~3.025</strong><span>km</span></div>
         </div>
 
+        <section class="print-tools" aria-label="Druckoptionen">
+          <div class="print-tools-head">
+            <div>
+              <p class="eyebrow">Druckansicht</p>
+              <h2>Route drucken</h2>
+            </div>
+            <button id="printRouteBtn" type="button">Drucken</button>
+          </div>
+
+          <label class="print-field">
+            <span>Umfang</span>
+            <select id="printScope">
+              <option value="active">Aktueller Tag</option>
+              <option value="all">Alle Tage</option>
+              <option value="custom">Tage auswählen</option>
+            </select>
+          </label>
+
+          <div class="print-day-picker" id="printDayPicker" aria-label="Tage auswählen"></div>
+
+          <div class="print-options" aria-label="Inhalte auswählen">
+            <label><input type="checkbox" data-print-option="meals" checked /> Essen</label>
+            <label><input type="checkbox" data-print-option="hotels" checked /> Hotels</label>
+            <label><input type="checkbox" data-print-option="stops" checked /> Stopps</label>
+            <label><input type="checkbox" data-print-option="notes" checked /> Hinweise</label>
+            <label><input type="checkbox" data-print-option="links" checked /> Links</label>
+            <label><input type="checkbox" data-print-option="maps" checked /> Karten</label>
+            <label><input type="checkbox" data-print-option="prices" checked /> Preise</label>
+            <label><input type="checkbox" data-print-option="ratings" checked /> Bewertungen</label>
+          </div>
+        </section>
+
         <nav class="day-list" id="dayList" aria-label="Reisetage"></nav>
       </aside>
 
@@ -47,9 +79,11 @@
       </main>
     </div>
 
+    <section class="print-area" id="printArea" aria-hidden="true"></section>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./data/routeData.js?v=9"></script>
     <script src="./data/googleConfig.js?v=1"></script>
-    <script src="./app.js?v=10"></script>
+    <script src="./app.js?v=11"></script>
   </body>
 </html>
