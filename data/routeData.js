@@ -2,7 +2,7 @@ const routeData = [
   {
     day: 1,
     title: "Basel → Ramstein/Landstuhl",
-    distance: "ca. 340 km",
+    distance: "ca. 330 km",
     countries: ["Schweiz", "Deutschland"],
     curveFactor: 5,
     description: "Direkt am ersten Abend in der Nähe der Ramstein Air Base ankommen, aber über Markgräflerland, Nordelsass und Pfälzerwald statt Autobahn.",
@@ -34,7 +34,7 @@ const routeData = [
   {
     day: 2,
     title: "Ramstein/Landstuhl → Reims",
-    distance: "ca. 330 km",
+    distance: "ca. 310 km",
     countries: ["Deutschland", "Frankreich"],
     curveFactor: 4,
     description: "Von der Pfalz über Saarlouis und kleine Grenzorte nach Verdun, dann durch die Argonnen nach Reims.",
@@ -59,7 +59,7 @@ const routeData = [
   {
     day: 3,
     title: "Reims → Rouen",
-    distance: "ca. 300 km",
+    distance: "ca. 310 km",
     countries: ["Frankreich"],
     curveFactor: 3,
     description: "Großer Nordwestbogen oberhalb von Paris über Laon, Saint-Quentin, Amiens und die Wälder vor Rouen.",
@@ -83,7 +83,7 @@ const routeData = [
   {
     day: 4,
     title: "Rouen → Caen",
-    distance: "ca. 260 km",
+    distance: "ca. 235 km",
     countries: ["Frankreich"],
     curveFactor: 4,
     description: "Normandie-Tag mit Seine-Schleifen, Honfleur, Deauville und einer Kurvenrunde durch die Suisse Normande nach Caen.",
@@ -108,7 +108,7 @@ const routeData = [
   {
     day: 5,
     title: "Caen D-Day Runde",
-    distance: "ca. 160 km",
+    distance: "ca. 150 km",
     countries: ["Frankreich"],
     curveFactor: 2,
     description: "Ruhiger Rundtag zu Pegasus Bridge, Omaha Beach, Normandy American Cemetery und Pointe du Hoc.",
@@ -133,7 +133,7 @@ const routeData = [
   {
     day: 6,
     title: "Caen → Le Mans",
-    distance: "ca. 270 km",
+    distance: "ca. 260 km",
     countries: ["Frankreich"],
     curveFactor: 4,
     description: "Südwärts über Bayeux, Saint-Lô und die Suisse Normande, dann durch kleine Orte in Richtung Le Mans.",
@@ -157,7 +157,7 @@ const routeData = [
   {
     day: 7,
     title: "Le Mans → Tours/Loire",
-    distance: "ca. 180 km",
+    distance: "ca. 185 km",
     countries: ["Frankreich"],
     curveFactor: 3,
     description: "Gemütlicher Loire-Tag über kleine Orte, Schlösser und Weinstraßen nach Tours.",
@@ -181,7 +181,7 @@ const routeData = [
   {
     day: 8,
     title: "Tours → Nevers",
-    distance: "ca. 290 km",
+    distance: "ca. 265 km",
     countries: ["Frankreich"],
     curveFactor: 3,
     description: "Südöstlicher Bogen über Loches, Valençay, Sancerre und an die Loire bei Nevers.",
@@ -204,7 +204,7 @@ const routeData = [
   {
     day: 9,
     title: "Nevers → Dijon",
-    distance: "ca. 280 km",
+    distance: "ca. 250 km",
     countries: ["Frankreich"],
     curveFactor: 5,
     description: "Einer der schönsten Motorradtage: durch den Morvan über Seen, Wälder und kleine Kurvenstraßen nach Dijon.",
@@ -229,7 +229,7 @@ const routeData = [
   {
     day: 10,
     title: "Dijon → Besançon",
-    distance: "ca. 165 km",
+    distance: "ca. 160 km",
     countries: ["Frankreich"],
     curveFactor: 4,
     description: "Über Jura-Vorland, Weinorte und kleine Flusstäler Richtung Besançon.",
@@ -253,7 +253,7 @@ const routeData = [
   {
     day: 11,
     title: "Besançon → Colmar",
-    distance: "ca. 300 km",
+    distance: "ca. 310 km",
     countries: ["Frankreich"],
     curveFactor: 5,
     description: "Jura- und Südvogesen-Tag über Pontarlier, Morteau, Ballon d'Alsace und die Weinstraße nach Colmar.",
@@ -325,7 +325,7 @@ const routeData = [
   {
     day: 14,
     title: "Freiburg → Basel",
-    distance: "ca. 90 km",
+    distance: "ca. 85 km",
     countries: ["Deutschland", "Schweiz"],
     curveFactor: 4,
     description: "Kurzer Heimtag mit Schwarzwald- und Markgräflerland-Schleife, damit die Rückgabe nach Basel entspannt bleibt.",

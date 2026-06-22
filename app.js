@@ -43,7 +43,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=5");
+    const response = await fetch("./data/routeGeometry.json?v=6");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
@@ -178,7 +178,7 @@ function renderDetails(day) {
         <a href="${appleDestinationLink(day)}" target="_blank" rel="noreferrer">Apple Ziel</a>
         <button type="button" onclick="focusDay(routeData[${day.day - 1}])">Tag fokussieren</button>
       </div>
-      <p class="gpx-note">Finale GPX am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
+      <p class="gpx-note">Kartenlinie ist mit Autobahn/Maut vermeiden berechnet. Finale GPX trotzdem am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
     </article>
 
     <section class="detail-card">
