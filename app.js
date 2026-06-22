@@ -7,6 +7,8 @@ const els = {
   focusDay: document.querySelector("#focusDayBtn"),
   printArea: document.querySelector("#printArea"),
   printRoute: document.querySelector("#printRouteBtn"),
+  printMenuButton: document.querySelector("#printMenuBtn"),
+  printMenu: document.querySelector("#printMenu"),
   printScope: document.querySelector("#printScope"),
   printDayPicker: document.querySelector("#printDayPicker")
 };
@@ -68,9 +70,15 @@ function bindEvents() {
   els.showAll.addEventListener("click", fitAll);
   els.showAllMobile.addEventListener("click", fitAll);
   els.focusDay.addEventListener("click", () => focusDay(activeDay));
+  els.printMenuButton.addEventListener("click", togglePrintMenu);
   els.printRoute.addEventListener("click", printRouteSelection);
   els.printScope.addEventListener("change", () => {
     els.printDayPicker.classList.toggle("visible", els.printScope.value === "custom");
+  });
+  document.addEventListener("click", (event) => {
+    if (els.printMenu.hidden) return;
+    if (els.printMenu.contains(event.target) || els.printMenuButton.contains(event.target)) return;
+    closePrintMenu();
   });
 
   window.addEventListener("resize", () => {
@@ -79,6 +87,18 @@ function bindEvents() {
       focusDay(activeDay, { padding: true });
     }, 140);
   });
+}
+
+
+function togglePrintMenu() {
+  const willOpen = els.printMenu.hidden;
+  els.printMenu.hidden = !willOpen;
+  els.printMenuButton.setAttribute("aria-expanded", String(willOpen));
+}
+
+function closePrintMenu() {
+  els.printMenu.hidden = true;
+  els.printMenuButton.setAttribute("aria-expanded", "false");
 }
 
 function renderDayList(days) {
@@ -120,6 +140,7 @@ function printRouteSelection() {
   const options = getPrintOptions();
   els.printArea.innerHTML = renderPrintView(days, options);
   els.printArea.setAttribute("aria-hidden", "false");
+  closePrintMenu();
   window.setTimeout(() => window.print(), 80);
 }
 
@@ -280,19 +301,50 @@ function renderDetails(day) {
       <p class="gpx-note">Kartenlinie ist mit Autobahn/Maut vermeiden berechnet. Finale GPX trotzdem am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
     </article>
 
+    <section class="detail-card overview-card">
+      <h3>Tagesüberblick</h3>
+      <div class="overview-grid">
+        ${overviewCard("Start", day.stops[0].name, day.stops[0].address)}
+        ${overviewCard("Mittag ungefähr", day.stops[Math.floor((day.stops.length - 1) * 0.52)].name, "gute Stelle für Pause und Essen")}
+        ${overviewCard("Ziel", day.stops[day.stops.length - 1].name, "Hotel, Abendessen und Tagesabschluss")}
+      </div>
+    </section>
+
     <section class="detail-card">
-      <h3>Essen nach Etappenfortschritt</h3>
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">nah an der Strecke</p>
+          <h3>Sehenswürdigkeiten</h3>
+        </div>
+      </div>
+      <div class="attraction-grid">
+        ${attractionPlan(day).map(attractionCard).join("")}
+      </div>
+    </section>
+
+    <section class="detail-card">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">nach Tagesfortschritt</p>
+          <h3>Essen & Pausen</h3>
+        </div>
+      </div>
       <div class="meal-grid">
         ${mealPlan(day).map(mealCard).join("")}
       </div>
     </section>
 
-    ${day.food ? `
-      <section class="detail-card">
-        <h3>Diner & Abendessen</h3>
-        <ul class="note-list">${day.food.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-      </section>
-    ` : ""}
+    <section class="detail-card">
+      <div class="section-title-row">
+        <div>
+          <p class="eyebrow">Übernachtung</p>
+          <h3>Hotelvorschläge</h3>
+        </div>
+      </div>
+      <div class="hotel-grid">
+        ${day.hotels.map(hotelCard).join("")}
+      </div>
+    </section>
 
     <div class="detail-grid">
       <section class="detail-card">
@@ -301,25 +353,28 @@ function renderDetails(day) {
       </section>
       <section class="detail-card">
         <h3>Motorrad-Hinweise</h3>
-        <ul class="note-list">${day.riderNotes.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+        <ul class="note-list">${[...day.riderNotes, ...(day.food || [])].map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
       </section>
     </div>
 
     <section class="detail-card">
       <h3>Stoppliste</h3>
-      <div class="stop-list">
+      <div class="stop-list compact-stop-list">
         ${day.stops.map((stop, index) => stopCard(stop, index, day.day)).join("")}
-      </div>
-    </section>
-
-    <section class="detail-card">
-      <h3>Hotelvorschläge</h3>
-      <div class="hotel-grid">
-        ${day.hotels.map(hotelCard).join("")}
       </div>
     </section>
   `;
   hydratePlacePhotos();
+}
+
+function overviewCard(label, title, text) {
+  return `
+    <article class="overview-item">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(title)}</strong>
+      <small>${escapeHtml(text)}</small>
+    </article>
+  `;
 }
 
 function stopCard(stop, index, dayNumber) {
@@ -343,7 +398,7 @@ function stopCard(stop, index, dayNumber) {
 function hotelCard(hotel) {
   return `
     <article class="hotel-card">
-      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(`${hotel.name} ${hotel.address}`)}" data-place-kind="hotel">
+      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -383,7 +438,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -521,14 +576,57 @@ function makeMeal(label, time, title, stop, note, progress, query) {
     search,
     google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
     embed: mapEmbedLink(query, stop.address),
-    apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`
+    apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`,
+    lat: stop.lat,
+    lng: stop.lng
   };
+}
+
+function attractionPlan(day) {
+  return day.highlights.slice(0, 6).map((name, index) => {
+    const anchor = day.stops[Math.min(index + 1, day.stops.length - 1)];
+    const query = `${name} ${anchor.address}`;
+    const encoded = encodeURIComponent(query);
+    return {
+      name,
+      area: anchor.name,
+      lat: anchor.lat,
+      lng: anchor.lng,
+      note: index < 3 ? "direkt als schöner Stopp einplanbar" : "in Routennähe als flexible Pause",
+      query,
+      google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
+      apple: `https://maps.apple.com/?q=${encoded}&ll=${anchor.lat},${anchor.lng}`
+    };
+  });
+}
+
+function attractionCard(attraction) {
+  return `
+    <article class="attraction-card">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
+        <div class="place-photo-empty">
+          <span>Google-Fotos</span>
+          <strong>werden geladen</strong>
+        </div>
+      </div>
+      <div class="attraction-content">
+        <p class="hotel-area">${escapeHtml(attraction.area)}</p>
+        <h4>${escapeHtml(attraction.name)}</h4>
+        <p>${escapeHtml(attraction.note)}</p>
+        <div class="link-row">
+          <a href="${attraction.google}" target="_blank" rel="noreferrer">Google Maps</a>
+          <a href="${attraction.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 
 
 let googlePlacesPromise;
 let placesService;
+const placePhotoCache = new Map();
 
 function hydratePlacePhotos() {
   const cards = [...document.querySelectorAll(".place-photo-card")];
@@ -545,7 +643,7 @@ function hydratePlacePhotos() {
     cards.forEach(loadPlaceCard);
   }).catch(() => {
     cards.forEach((card) => {
-      card.innerHTML = '<div class="place-photo-empty"><span>Google Places</span><strong>konnte nicht geladen werden</strong></div>';
+      renderPlaceEmpty(card, "Google Places", "konnte nicht geladen werden");
     });
   });
 }
@@ -572,32 +670,133 @@ function loadGooglePlaces() {
   return googlePlacesPromise;
 }
 
-function loadPlaceCard(card) {
+async function loadPlaceCard(card) {
   const query = card.dataset.placeQuery;
+  const lat = Number(card.dataset.placeLat);
+  const lng = Number(card.dataset.placeLng);
+  const kind = card.dataset.placeKind || "place";
   if (!query || !placesService) return;
-  placesService.findPlaceFromQuery({
-    query,
-    fields: ["name", "photos", "rating", "user_ratings_total", "price_level", "formatted_address", "url"]
-  }, (results, status) => {
-    if (status !== google.maps.places.PlacesServiceStatus.OK || !results?.[0]) {
-      card.innerHTML = '<div class="place-photo-empty"><span>Keine Google-Fotos gefunden</span><strong>Google Maps öffnen</strong></div>';
+
+  const cacheKey = `${kind}|${query}|${lat}|${lng}`;
+  if (placePhotoCache.has(cacheKey)) {
+    renderPlaceResult(card, placePhotoCache.get(cacheKey), query);
+    return;
+  }
+
+  try {
+    const place = await findBestPlace({ query, lat, lng, kind });
+    if (!place) {
+      renderPlaceEmpty(card, "Keine Google-Fotos gefunden", "Google Maps Link nutzen");
       return;
     }
-    const place = results[0];
-    const photo = place.photos?.[0]?.getUrl({ maxWidth: 900, maxHeight: 520 });
-    const rating = place.rating ? `${place.rating.toFixed(1)} Sterne` : "Bewertung live prüfen";
-    const count = place.user_ratings_total ? `${place.user_ratings_total} Bewertungen` : "";
-    const price = typeof place.price_level === "number" ? "€".repeat(Math.max(1, place.price_level)) : "Preis live prüfen";
-    const photoMarkup = photo ? `<img src="${photo}" alt="${escapeHtml(place.name || query)}" loading="lazy" />` : "";
-    card.innerHTML = `
-      ${photoMarkup}
-      <div class="place-photo-overlay">
-        <span>${escapeHtml(place.name || query)}</span>
-        <strong>${escapeHtml(rating)}${count ? ` · ${escapeHtml(count)}` : ""}</strong>
-        <small>${escapeHtml(price)}</small>
-      </div>
-    `;
+    placePhotoCache.set(cacheKey, place);
+    renderPlaceResult(card, place, query);
+  } catch (error) {
+    renderPlaceEmpty(card, "Google Places Fehler", readablePlaceStatus(error));
+  }
+}
+
+async function findBestPlace({ query, lat, lng, kind }) {
+  const nearby = Number.isFinite(lat) && Number.isFinite(lng)
+    ? await nearbyPlaceSearch({ query, lat, lng, kind })
+    : null;
+  if (nearby?.photos?.length) return nearby;
+
+  const text = await textPlaceSearch(query);
+  if (text?.photos?.length) return text;
+
+  return nearby || text;
+}
+
+function nearbyPlaceSearch({ query, lat, lng, kind }) {
+  const type = kind === "hotel" ? "lodging" : kind === "restaurant" ? "restaurant" : "tourist_attraction";
+  const radius = kind === "hotel" ? 350 : kind === "restaurant" ? 1400 : 2500;
+  return new Promise((resolve, reject) => {
+    placesService.nearbySearch({
+      location: new google.maps.LatLng(lat, lng),
+      radius,
+      keyword: query,
+      type
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results?.length) {
+        resolve(pickPhotoPlace(results));
+        return;
+      }
+      if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+        resolve(null);
+        return;
+      }
+      reject(status);
+    });
   });
+}
+
+function textPlaceSearch(query) {
+  return new Promise((resolve, reject) => {
+    placesService.findPlaceFromQuery({
+      query,
+      fields: ["name", "photos", "rating", "user_ratings_total", "price_level", "formatted_address", "url"]
+    }, (results, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && results?.length) {
+        resolve(pickPhotoPlace(results));
+        return;
+      }
+      if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+        resolve(null);
+        return;
+      }
+      reject(status);
+    });
+  });
+}
+
+function pickPhotoPlace(results) {
+  return results.find((place) => place.photos?.length) || results[0];
+}
+
+function renderPlaceResult(card, place, fallbackName) {
+  const photos = (place.photos || []).slice(0, 6).map((photo) => photo.getUrl({ maxWidth: 920, maxHeight: 560 }));
+  if (!photos.length) {
+    renderPlaceEmpty(card, "Keine Google-Fotos gefunden", place.name || fallbackName);
+    return;
+  }
+  const rating = place.rating ? `${place.rating.toFixed(1)} Sterne` : "Bewertung live prüfen";
+  const count = place.user_ratings_total ? `${place.user_ratings_total} Bewertungen` : "";
+  const price = typeof place.price_level === "number" ? "€".repeat(Math.max(1, place.price_level)) : "Preis live prüfen";
+  const slidesId = `slides-${Math.random().toString(36).slice(2)}`;
+  card.innerHTML = `
+    <div class="photo-carousel" id="${slidesId}" tabindex="0" aria-label="Google Fotos ${escapeHtml(place.name || fallbackName)}">
+      ${photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(place.name || fallbackName)} Foto ${index + 1}" loading="lazy" />`).join("")}
+    </div>
+    ${photos.length > 1 ? `
+      <button class="photo-nav photo-prev" type="button" aria-label="Vorheriges Foto">‹</button>
+      <button class="photo-nav photo-next" type="button" aria-label="Nächstes Foto">›</button>
+    ` : ""}
+    <div class="place-photo-overlay">
+      <span>${escapeHtml(place.name || fallbackName)}</span>
+      <strong>${escapeHtml(rating)}${count ? ` · ${escapeHtml(count)}` : ""}</strong>
+      <small>${escapeHtml(price)}</small>
+    </div>
+  `;
+  card.querySelector(".photo-prev")?.addEventListener("click", () => scrollPhotoCarousel(card, -1));
+  card.querySelector(".photo-next")?.addEventListener("click", () => scrollPhotoCarousel(card, 1));
+}
+
+function scrollPhotoCarousel(card, direction) {
+  const carousel = card.querySelector(".photo-carousel");
+  if (!carousel) return;
+  carousel.scrollBy({ left: direction * carousel.clientWidth, behavior: "smooth" });
+}
+
+function renderPlaceEmpty(card, title, detail) {
+  card.innerHTML = `<div class="place-photo-empty"><span>${escapeHtml(title)}</span><strong>${escapeHtml(detail)}</strong></div>`;
+}
+
+function readablePlaceStatus(status) {
+  if (typeof status !== "string") return "bitte API prüfen";
+  if (status === "REQUEST_DENIED") return "API-Key/Referrer prüfen";
+  if (status === "OVER_QUERY_LIMIT") return "Limit erreicht";
+  return status.replace(/_/g, " ").toLowerCase();
 }
 
 function mapEmbedLink(name, address) {
@@ -612,6 +811,7 @@ function daySearchText(day) {
     day.focus,
     day.description,
     day.highlights.join(" "),
+    attractionPlan(day).map((item) => `${item.name} ${item.area}`).join(" "),
     day.food?.join(" ") || "",
     mealPlan(day).map((meal) => `${meal.label} ${meal.title} ${meal.place}`).join(" "),
     day.stops.map((stop) => `${stop.name} ${stop.address}`).join(" "),

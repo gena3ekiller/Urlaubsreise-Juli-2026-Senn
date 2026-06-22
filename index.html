@@ -7,7 +7,7 @@
     <title>Motorradroute Basel - Caen</title>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css?v=10" />
+    <link rel="stylesheet" href="./style.css?v=11" />
   </head>
   <body>
     <div class="app-shell">
@@ -17,7 +17,10 @@
             <p class="eyebrow">14 Tage · ohne Autobahn planen</p>
             <h1>Basel → Caen → Basel</h1>
           </div>
-          <button class="icon-button" id="showAllMobile" type="button" title="Alles anzeigen">↗</button>
+          <div class="brand-actions">
+            <button class="icon-button" id="printMenuBtn" type="button" title="Drucken" aria-label="Drucken" aria-expanded="false">⎙</button>
+            <button class="icon-button" id="showAllMobile" type="button" title="Alles anzeigen" aria-label="Alles anzeigen">↗</button>
+          </div>
         </header>
 
         <label class="search-wrap">
@@ -31,7 +34,7 @@
           <div><strong>~3.025</strong><span>km</span></div>
         </div>
 
-        <section class="print-tools" aria-label="Druckoptionen">
+        <section class="print-tools" id="printMenu" aria-label="Druckoptionen" hidden>
           <div class="print-tools-head">
             <div>
               <p class="eyebrow">Druckansicht</p>
@@ -57,7 +60,7 @@
             <label><input type="checkbox" data-print-option="stops" checked /> Stopps</label>
             <label><input type="checkbox" data-print-option="notes" checked /> Hinweise</label>
             <label><input type="checkbox" data-print-option="links" checked /> Links</label>
-            <label><input type="checkbox" data-print-option="maps" checked /> Karten</label>
+            <label><input type="checkbox" data-print-option="maps" checked /> Bilder/Karten</label>
             <label><input type="checkbox" data-print-option="prices" checked /> Preise</label>
             <label><input type="checkbox" data-print-option="ratings" checked /> Bewertungen</label>
           </div>
@@ -84,6 +87,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./data/routeData.js?v=9"></script>
     <script src="./data/googleConfig.js?v=1"></script>
-    <script src="./app.js?v=11"></script>
+    <script src="./app.js?v=12"></script>
   </body>
 </html>
