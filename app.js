@@ -43,7 +43,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=2");
+    const response = await fetch("./data/routeGeometry.json?v=3");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
@@ -181,6 +181,13 @@ function renderDetails(day) {
       <p class="gpx-note">Finale GPX am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
     </article>
 
+    ${day.food ? `
+      <section class="detail-card">
+        <h3>Diner & Abendessen</h3>
+        <ul class="note-list">${day.food.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      </section>
+    ` : ""}
+
     <div class="detail-grid">
       <section class="detail-card">
         <h3>Highlights</h3>
@@ -230,6 +237,7 @@ function hotelCard(hotel) {
   return `
     <article class="hotel-card">
       <div class="hotel-image">
+        <img src="${hotel.image}" alt="${escapeHtml(hotel.imageLabel)} für ${escapeHtml(hotel.name)}" loading="lazy" />
         <span>${escapeHtml(hotel.imageLabel)}</span>
       </div>
       <div class="hotel-content">
@@ -351,6 +359,7 @@ function daySearchText(day) {
     day.focus,
     day.description,
     day.highlights.join(" "),
+    day.food?.join(" ") || "",
     day.stops.map((stop) => `${stop.name} ${stop.address}`).join(" "),
     day.hotels.map((hotel) => `${hotel.name} ${hotel.area} ${hotel.address}`).join(" ")
   ].join(" ");
