@@ -9,7 +9,7 @@ const routeData = [
     focus: "Ramstein am 1. Abend, Pfälzerwald, Orte statt Autobahn",
     note: "Ramstein Air Base ist eine aktive Militärbasis. Ihr habt keinen Militärbasis-Zugang; deshalb sind nur Hotels, Diners und Restaurants außerhalb der Base eingeplant.",
     riderNotes: ["Früh starten, damit der erste Tag trotz 300+ km entspannt bleibt.", "Navigation auf „Autobahn vermeiden“ und „kurvig“ stellen.", "Im Pfälzerwald viele Pausen einplanen, die Strecke ist kurvig und konzentriert."],
-    highlights: ["Markgräflerland", "Elsass", "Deutsche Weinstraße", "Johanniskreuz", "Ramstein/Landstuhl"],
+    highlights: ["Markgräflerland", "Elsass", "Deutsche Weinstraße", "Johanniskreuz", "Ramstein/Landstuhl", "Kaiserslautern"],
     stops: [
       stop("Basel", "Basel, Schweiz", 47.5596, 7.5886),
       stop("Neuf-Brisach", "Neuf-Brisach, Elsass", 48.0170, 7.5270),
@@ -28,7 +28,16 @@ const routeData = [
     ],
     food: [
       "Kein Base-Zugang: Dinner/Diner ausschließlich außerhalb der Ramstein Air Base planen.",
-      "Empfehlung: American Diner, BBQ oder Steakhouse im Raum Landstuhl/Ramstein über Google Maps live prüfen."
+      "USA-Fan-Fokus: Kullman's Diner, Benji's Birdhouse, The BBQ Connection oder Smash and Dash als Abendziel prüfen.",
+      "Kaiserslautern/Ramstein ist Teil der Kaiserslautern Military Community. Für US-Flair deshalb bewusst außerhalb der Base planen."
+    ],
+    usaSpots: [
+      spot("Kullman's Diner Kaiserslautern", "American Diner", "Mainzer Straße 119, Kaiserslautern", 49.4448, 7.7970, "Originales US-Diner-Flair, Burger, Pancakes und klassische Diner-Optik. Sehr passend für den USA-Fan in der Gruppe.", "restaurant"),
+      spot("Benji's Birdhouse", "Nashville Hot Chicken", "Miesenbacher Str. 54, Ramstein-Miesenbach", 49.4452, 7.5584, "US-Style Chicken Sandwiches nahe Ramstein, laut Stars and Stripes besonders bei Amerikanern beliebt.", "restaurant"),
+      spot("The BBQ Connection", "BBQ in Ramstein", "Carl-Zeiss-Str. 3A, Ramstein-Miesenbach", 49.4492, 7.5704, "Smoky BBQ als passender Dinner-Stopp nach Ankunft im Ramstein-Umfeld.", "restaurant"),
+      spot("Smash and Dash", "Smash Burger", "Kaiserstraße 77, Kaiserslautern", 49.4258, 7.6745, "US-inspirierte Smash Burger, gut als Alternative Richtung Kaiserslautern/Einsiedlerhof.", "restaurant"),
+      spot("Docu Center Ramstein", "US-Geschichte", "Schernauer Straße 46, Ramstein-Miesenbach", 49.4459, 7.5548, "Dokumentationszentrum zur Geschichte der US-Amerikaner in Rheinland-Pfalz. Öffentlich zugänglich, also sinnvoll ohne Base-Zugang.", "attraction"),
+      spot("Museum im Westrich Ramstein", "Ramstein Ortsgeschichte", "Miesenbacher Straße 1, Ramstein-Miesenbach", 49.4455, 7.5545, "Kleiner Zusatzstopp im Ort Ramstein, gut kombinierbar mit Docu Center und Dinner.", "attraction")
     ]
   },
   {
@@ -469,6 +478,20 @@ function hotel(name, area, address, lat, lng, parking, pro, con) {
     priceRange: profile.priceRange,
     rating: profile.rating,
     imageLabel: "Echte Hotelbilder",
+    links: makeLinks(name, address, lat, lng)
+  };
+}
+
+function spot(name, area, address, lat, lng, note, kind) {
+  return {
+    name,
+    area,
+    address,
+    lat,
+    lng,
+    note,
+    kind,
+    query: `${name} ${address}`,
     links: makeLinks(name, address, lat, lng)
   };
 }

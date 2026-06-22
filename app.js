@@ -206,6 +206,9 @@ function renderPrintDay(day, options) {
       ${options.meals ? printSection("Essen nach Fortschritt", mealPlan(day).map((meal) => `
         <li><strong>${escapeHtml(meal.label)} ${escapeHtml(meal.time)}:</strong> ${escapeHtml(meal.title)} bei ${escapeHtml(meal.place)}. ${escapeHtml(meal.note)}${options.links ? `<br><span>${escapeHtml(meal.google)}</span>` : ""}</li>
       `).join("")) : ""}
+      ${options.meals && day.usaSpots ? printSection("USA-Fan Stopps Ramstein/Kaiserslautern", day.usaSpots.map((spot) => `
+        <li><strong>${escapeHtml(spot.name)}</strong> · ${escapeHtml(spot.area)}<br>${escapeHtml(spot.note)}${options.links ? `<br><span>${escapeHtml(spot.links.google)}</span>` : ""}</li>
+      `).join("")) : ""}
       ${options.stops ? printSection("Stoppliste", day.stops.map((stop, index) => `
         <li><strong>${day.day}.${index + 1} ${escapeHtml(stop.name)}</strong> - ${escapeHtml(stop.address)}${options.links ? `<br><span>${escapeHtml(stop.links.google)}</span>` : ""}</li>
       `).join("")) : ""}
@@ -335,6 +338,21 @@ function renderDetails(day) {
       </div>
     </section>
 
+    ${day.usaSpots ? `
+      <section class="detail-card usa-card">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">Ramstein / Kaiserslautern</p>
+            <h3>USA-Fan Stopps</h3>
+          </div>
+        </div>
+        <p class="description">Alles außerhalb der Air Base geplant: Diner, BBQ, Burger und öffentlich erreichbare Ramstein-Orte.</p>
+        <div class="attraction-grid">
+          ${day.usaSpots.map(usaSpotCard).join("")}
+        </div>
+      </section>
+    ` : ""}
+
     <section class="detail-card">
       <div class="section-title-row">
         <div>
@@ -436,6 +454,29 @@ function hotelCard(hotel) {
           <a href="${hotel.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
           <a href="${hotel.links.photos}" target="_blank" rel="noreferrer">Hotelbilder</a>
           <a href="${hotel.links.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function usaSpotCard(spot) {
+  return `
+    <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(spot.name)} öffnen">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-google="${spot.links.google}" data-place-apple="${spot.links.apple}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
+        <div class="place-photo-empty">
+          <span>Google-Fotos</span>
+          <strong>werden geladen</strong>
+        </div>
+      </div>
+      <div class="attraction-content">
+        <p class="hotel-area">${escapeHtml(spot.area)}</p>
+        <h4>${escapeHtml(spot.name)}</h4>
+        <p>${escapeHtml(spot.note)}</p>
+        <div class="link-row">
+          <a href="${spot.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
+          <a href="${spot.links.photos}" target="_blank" rel="noreferrer">Fotos</a>
+          <a href="${spot.links.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
         </div>
       </div>
     </article>
@@ -582,7 +623,7 @@ function mealPlan(day) {
   const lunchStop = day.stops[Math.floor((day.stops.length - 1) * 0.52)];
   const dinnerStop = day.stops[day.stops.length - 1];
   const dinnerQuery = day.day === 1
-    ? "American diner BBQ restaurant"
+    ? "The BBQ Connection Ramstein American BBQ diner"
     : "gutes Restaurant";
 
   return [
@@ -1022,6 +1063,7 @@ function daySearchText(day) {
     day.highlights.join(" "),
     attractionPlan(day).map((item) => `${item.name} ${item.area}`).join(" "),
     day.food?.join(" ") || "",
+    day.usaSpots?.map((spot) => `${spot.name} ${spot.area} ${spot.note}`).join(" ") || "",
     mealPlan(day).map((meal) => `${meal.label} ${meal.title} ${meal.place}`).join(" "),
     day.stops.map((stop) => `${stop.name} ${stop.address}`).join(" "),
     day.hotels.map((hotel) => `${hotel.name} ${hotel.area} ${hotel.address}`).join(" ")
