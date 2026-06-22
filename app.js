@@ -16,6 +16,9 @@ const els = {
 };
 
 const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166", "#47e5bc"];
+const dayColorOverrides = {
+  13: "#e879f9"
+};
 let routeGeometryData = {};
 let allRoutePoints = routeData.flatMap((day) => getRoutePoints(day));
 let activeDay = routeData[0];
@@ -228,9 +231,9 @@ function printSection(title, items) {
 
 function renderAllRoutes() {
   routeLayer.clearLayers();
-  routeData.forEach((day, index) => {
+  routeData.forEach((day) => {
     L.polyline(getRoutePoints(day), {
-      color: colors[index % colors.length],
+      color: getDayColor(day),
       weight: 4,
       opacity: 0.88,
       lineCap: "round",
@@ -251,7 +254,7 @@ function selectDay(dayNumber, options = { fit: true }) {
 function renderActiveRoute(day) {
   markerLayer.clearLayers();
   activeRouteLayer.clearLayers();
-  const dayColor = colors[(day.day - 1) % colors.length];
+  const dayColor = getDayColor(day);
   const points = getRoutePoints(day);
 
   L.polyline(points, {
@@ -491,7 +494,7 @@ function renderOverviewMarkers() {
   routeData.forEach((day, index) => {
     const start = day.stops[0];
     const position = offsetDuplicate(start, index, routeData.map((item) => item.stops[0]));
-    const color = colors[(day.day - 1) % colors.length];
+    const color = getDayColor(day);
     const marker = L.marker(position, {
       icon: overviewIcon(day.day, color),
       keyboard: true,
@@ -503,6 +506,10 @@ function renderOverviewMarkers() {
       <span>${escapeHtml(day.distance)} · ${escapeHtml(day.focus)}</span>
     `);
   });
+}
+
+function getDayColor(day) {
+  return dayColorOverrides[day.day] || colors[(day.day - 1) % colors.length];
 }
 
 function numberedIcon(dayNumber, stopNumber, color) {
