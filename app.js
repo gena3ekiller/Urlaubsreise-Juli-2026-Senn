@@ -10,7 +10,9 @@ const els = {
   printMenuButton: document.querySelector("#printMenuBtn"),
   printMenu: document.querySelector("#printMenu"),
   printScope: document.querySelector("#printScope"),
-  printDayPicker: document.querySelector("#printDayPicker")
+  printDayPicker: document.querySelector("#printDayPicker"),
+  placeModal: document.querySelector("#placeModal"),
+  placeModalBody: document.querySelector("#placeModalBody")
 };
 
 const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166", "#47e5bc"];
@@ -76,9 +78,16 @@ function bindEvents() {
     els.printDayPicker.classList.toggle("visible", els.printScope.value === "custom");
   });
   document.addEventListener("click", (event) => {
-    if (els.printMenu.hidden) return;
-    if (els.printMenu.contains(event.target) || els.printMenuButton.contains(event.target)) return;
-    closePrintMenu();
+    if (!els.printMenu.hidden && !els.printMenu.contains(event.target) && !els.printMenuButton.contains(event.target)) {
+      closePrintMenu();
+    }
+    if (event.target.closest("[data-close-place-modal]")) {
+      closePlaceModal();
+    }
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closePlaceModal();
   });
 
   window.addEventListener("resize", () => {
@@ -398,7 +407,7 @@ function stopCard(stop, index, dayNumber) {
 function hotelCard(hotel) {
   return `
     <article class="hotel-card">
-      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
+      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-google="${hotel.links.google}" data-place-apple="${hotel.links.apple}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -438,7 +447,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-google="${meal.google}" data-place-apple="${meal.apple}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -602,8 +611,8 @@ function attractionPlan(day) {
 
 function attractionCard(attraction) {
   return `
-    <article class="attraction-card">
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
+    <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(attraction.name)} öffnen">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-google="${attraction.google}" data-place-apple="${attraction.apple}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -630,6 +639,22 @@ const PLACES_TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchTe
 function hydratePlacePhotos() {
   const cards = [...document.querySelectorAll(".place-photo-card")];
   if (!cards.length) return;
+
+  cards.forEach((card) => {
+    const container = card.closest(".place-open-card, .hotel-card, .meal-card, .attraction-card");
+    if (!container || container.dataset.placeOpenBound) return;
+    container.dataset.placeOpenBound = "true";
+    container.addEventListener("click", (event) => {
+      if (event.target.closest("a, button, iframe")) return;
+      openPlaceModal(card);
+    });
+    container.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target.closest("a, button")) return;
+      event.preventDefault();
+      openPlaceModal(card);
+    });
+  });
 
   if (!window.GOOGLE_MAPS_API_KEY) {
     cards.forEach((card) => {
@@ -708,11 +733,8 @@ function pickPhotoPlace(results) {
 }
 
 function renderPlaceResult(card, place, fallbackName, kind) {
-  const photos = (place.photos || []).slice(0, 6).map((photo) => photo.name ? googlePhotoUrl(photo.name) : "").filter(Boolean);
-  const name = place.displayName?.text || place.displayName || fallbackName;
-  const rating = place.rating ? `${Number(place.rating).toFixed(1)} Sterne` : "Bewertung live prüfen";
-  const count = place.userRatingCount ? `${place.userRatingCount} Bewertungen` : "";
-  const price = place.priceLevel ? formatGooglePrice(place.priceLevel) : "Preis live prüfen";
+  card.__placeResult = normalizePlaceResult(card, place, fallbackName, kind);
+  const { photos, name, rating, count, price } = card.__placeResult;
 
   if (!photos.length) {
     card.classList.add("no-google-photo");
@@ -743,6 +765,70 @@ function renderPlaceResult(card, place, fallbackName, kind) {
   `;
   card.querySelector(".photo-prev")?.addEventListener("click", () => scrollPhotoCarousel(card, -1));
   card.querySelector(".photo-next")?.addEventListener("click", () => scrollPhotoCarousel(card, 1));
+}
+
+function normalizePlaceResult(card, place, fallbackName, kind) {
+  const photos = (place.photos || []).slice(0, 8).map((photo) => photo.name ? googlePhotoUrl(photo.name) : "").filter(Boolean);
+  const fallbackTitle = card.dataset.placeTitle || fallbackName;
+  return {
+    name: place.displayName?.text || place.displayName || fallbackTitle,
+    rating: place.rating ? `${Number(place.rating).toFixed(1)} Sterne` : "Bewertung live prüfen",
+    count: place.userRatingCount ? `${place.userRatingCount} Bewertungen` : "",
+    price: place.priceLevel ? formatGooglePrice(place.priceLevel) : "Preis live prüfen",
+    photos,
+    kind,
+    note: card.dataset.placeNote || "",
+    area: card.dataset.placeAddress || "",
+    google: card.dataset.placeGoogle || "",
+    apple: card.dataset.placeApple || ""
+  };
+}
+
+function openPlaceModal(card) {
+  const data = card.__placeResult || {
+    name: card.dataset.placeTitle || card.dataset.placeQuery || "Details",
+    rating: "Bewertung live prüfen",
+    count: "",
+    price: "Preis live prüfen",
+    photos: [],
+    note: card.dataset.placeNote || "",
+    area: card.dataset.placeAddress || "",
+    google: card.dataset.placeGoogle || "",
+    apple: card.dataset.placeApple || ""
+  };
+  els.placeModalBody.innerHTML = renderPlaceModalContent(data);
+  els.placeModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+  els.placeModal.querySelector(".place-modal-close")?.focus();
+}
+
+function closePlaceModal() {
+  if (!els.placeModal || els.placeModal.getAttribute("aria-hidden") === "true") return;
+  els.placeModal.setAttribute("aria-hidden", "true");
+  els.placeModalBody.innerHTML = "";
+  document.body.classList.remove("modal-open");
+}
+
+function renderPlaceModalContent(data) {
+  const hero = data.photos.length
+    ? `<div class="modal-photo-carousel">${data.photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(data.name)} Foto ${index + 1}" loading="lazy" referrerpolicy="origin-when-cross-origin" />`).join("")}</div>`
+    : `<div class="modal-photo-empty"><span>Keine Fotos</span><strong>${escapeHtml(data.name)}</strong></div>`;
+  return `
+    ${hero}
+    <div class="modal-info">
+      <p class="eyebrow">${escapeHtml(data.area || "Details")}</p>
+      <h2 id="placeModalTitle">${escapeHtml(data.name)}</h2>
+      <div class="modal-facts">
+        <span>${escapeHtml(data.rating)}${data.count ? ` · ${escapeHtml(data.count)}` : ""}</span>
+        <span>${escapeHtml(data.price)}</span>
+      </div>
+      ${data.note ? `<p>${escapeHtml(data.note)}</p>` : ""}
+      <div class="link-row">
+        ${data.google ? `<a href="${data.google}" target="_blank" rel="noreferrer">Google Maps</a>` : ""}
+        ${data.apple ? `<a href="${data.apple}" target="_blank" rel="noreferrer">Apple Karten</a>` : ""}
+      </div>
+    </div>
+  `;
 }
 
 function googlePhotoUrl(photoName) {

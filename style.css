@@ -1602,3 +1602,166 @@ h4 {
   color: var(--muted);
   font-weight: 800;
 }
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.place-modal[aria-hidden="true"] {
+  display: none;
+}
+
+.place-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+}
+
+.place-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 11, 0.72);
+  backdrop-filter: blur(12px);
+}
+
+.place-modal-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  max-height: min(86dvh, 860px);
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 22px;
+  background: #121922;
+  box-shadow: 0 34px 100px rgba(0, 0, 0, 0.66);
+}
+
+.place-modal-close {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(4, 8, 12, 0.62);
+  color: #fff;
+  cursor: pointer;
+  font-size: 1.55rem;
+  line-height: 1;
+  backdrop-filter: blur(10px);
+}
+
+.place-modal-body {
+  max-height: inherit;
+  overflow: auto;
+}
+
+.modal-photo-carousel {
+  display: flex;
+  height: min(48dvh, 430px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  background: #0b1118;
+}
+
+.modal-photo-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.modal-photo-carousel img {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  scroll-snap-align: center;
+}
+
+.modal-photo-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  min-height: 300px;
+  background:
+    linear-gradient(135deg, rgba(255, 184, 77, 0.18), rgba(84, 214, 255, 0.12)),
+    #101720;
+  text-align: center;
+}
+
+.modal-photo-empty span {
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.modal-info {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+
+.modal-info h2 {
+  font-size: clamp(1.55rem, 4vw, 2.2rem);
+}
+
+.modal-info p:not(.eyebrow) {
+  margin: 0;
+  color: var(--soft);
+  line-height: 1.5;
+}
+
+.modal-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.modal-facts span {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--soft);
+  padding: 8px 11px;
+  font-weight: 850;
+}
+
+.place-open-card {
+  cursor: pointer;
+}
+
+.place-open-card:focus-visible,
+.hotel-card:focus-visible,
+.meal-card:focus-visible,
+.attraction-card:focus-visible {
+  outline: 3px solid rgba(84, 214, 255, 0.55);
+  outline-offset: 3px;
+}
+
+@media (max-width: 680px) {
+  .place-modal {
+    align-items: end;
+    padding: 0;
+  }
+
+  .place-modal-dialog {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .modal-photo-carousel {
+    height: min(42dvh, 330px);
+  }
+
+  .modal-info {
+    padding: 18px;
+  }
+}

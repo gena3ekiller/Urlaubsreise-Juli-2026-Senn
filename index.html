@@ -7,7 +7,7 @@
     <title>Motorradroute Basel - Caen</title>
     <link rel="preconnect" href="https://unpkg.com" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="./style.css?v=13" />
+    <link rel="stylesheet" href="./style.css?v=14" />
   </head>
   <body>
     <div class="app-shell">
@@ -82,11 +82,19 @@
       </main>
     </div>
 
+    <div class="place-modal" id="placeModal" aria-hidden="true">
+      <div class="place-modal-backdrop" data-close-place-modal></div>
+      <article class="place-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="placeModalTitle">
+        <button class="place-modal-close" type="button" data-close-place-modal aria-label="Schließen">×</button>
+        <div class="place-modal-body" id="placeModalBody"></div>
+      </article>
+    </div>
+
     <section class="print-area" id="printArea" aria-hidden="true"></section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./data/routeData.js?v=9"></script>
     <script src="./data/googleConfig.js?v=1"></script>
-    <script src="./app.js?v=16"></script>
+    <script src="./app.js?v=17"></script>
   </body>
 </html>
