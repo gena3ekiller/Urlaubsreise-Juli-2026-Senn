@@ -1580,3 +1580,25 @@ h4 {
     min-height: 190px;
   }
 }
+
+.no-google-photo {
+  border-bottom-color: rgba(255, 184, 77, 0.32);
+  background:
+    linear-gradient(135deg, rgba(255, 184, 77, 0.18), rgba(84, 214, 255, 0.10)),
+    #111923;
+}
+
+.no-google-photo::after {
+  display: none;
+}
+
+.rich-place-empty {
+  width: 100%;
+  min-height: inherit;
+  align-content: center;
+}
+
+.rich-place-empty small {
+  color: var(--muted);
+  font-weight: 800;
+}
