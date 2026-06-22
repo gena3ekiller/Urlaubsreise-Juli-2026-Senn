@@ -893,8 +893,6 @@ function makeLinks(name, address, lat, lng) {
   const query = encodeURIComponent(`${name} ${address}`);
   return {
     google: `https://www.google.com/maps/search/?api=1&query=${query}`,
-    photos: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address} Fotos`)}`,
-    apple: `https://maps.apple.com/?q=${query}&ll=${lat},${lng}`,
-    osm: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=14/${lat}/${lng}`
+    photos: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address} Fotos`)}`
   };
 }

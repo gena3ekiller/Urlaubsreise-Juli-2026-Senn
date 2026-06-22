@@ -449,10 +449,11 @@ function renderDetails(day) {
       </div>
       <div class="route-actions">
         <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">Google Tagesroute</a>
-        <a href="${appleDestinationLink(day)}" target="_blank" rel="noreferrer">Apple Ziel</a>
+        <button type="button" data-download-day-gpx>Garmin Tages-GPX</button>
+        <button type="button" data-download-option-gpx>Garmin Gesamt-GPX</button>
         <button type="button" data-focus-active-day>Tag fokussieren</button>
       </div>
-      <p class="gpx-note">Kartenlinie ist über bewusst gesetzte Landstraßen-Zwischenpunkte vorbereitet. Finale GPX am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
+      <p class="gpx-note">Für Garmin-Geräte: GPX herunterladen und per USB/SD in Garmin/BaseCamp importieren. Die Datei enthält die Stopps als Route und die sichtbare Kartenlinie als Track; am Gerät zusätzlich „Autobahnen vermeiden“ aktivieren.</p>
     </article>
 
     <section class="detail-card overview-card">
@@ -534,6 +535,8 @@ function renderDetails(day) {
     </section>
   `;
   els.details.querySelector("[data-focus-active-day]")?.addEventListener("click", () => focusDay(activeDay));
+  els.details.querySelector("[data-download-day-gpx]")?.addEventListener("click", () => downloadDayGpx(activeDay));
+  els.details.querySelector("[data-download-option-gpx]")?.addEventListener("click", () => downloadOptionGpx());
   hydratePlacePhotos();
 }
 
@@ -556,9 +559,7 @@ function stopCard(stop, index, dayNumber) {
         <p>${escapeHtml(stop.address)}</p>
         <small>${stop.lat.toFixed(4)}, ${stop.lng.toFixed(4)}</small>
         <div class="link-row">
-          <a href="${stop.links.google}" target="_blank" rel="noreferrer">Google</a>
-          <a href="${stop.links.apple}" target="_blank" rel="noreferrer">Apple</a>
-          <a href="${stop.links.osm}" target="_blank" rel="noreferrer">OSM</a>
+          <a href="${stop.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
         </div>
       </div>
     </article>
@@ -569,7 +570,7 @@ function hotelCard(hotel) {
   const story = hotelStory(hotel);
   return `
     <article class="hotel-card">
-      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-apple="${hotel.links.apple}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
+      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -593,7 +594,6 @@ function hotelCard(hotel) {
         <div class="link-row">
           <a href="${hotel.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
           <a href="${hotel.links.photos}" target="_blank" rel="noreferrer">Hotelbilder</a>
-          <a href="${hotel.links.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
         </div>
       </div>
     </article>
@@ -603,7 +603,7 @@ function hotelCard(hotel) {
 function usaSpotCard(spot) {
   return `
     <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(spot.name)} öffnen">
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-apple="${spot.links.apple}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -616,7 +616,6 @@ function usaSpotCard(spot) {
         <div class="link-row">
           <a href="${spot.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
           <a href="${spot.links.photos}" target="_blank" rel="noreferrer">Fotos</a>
-          <a href="${spot.links.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
         </div>
       </div>
     </article>
@@ -633,7 +632,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-apple="${meal.apple}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -645,7 +644,6 @@ function mealCard(meal) {
       </div>
       <div class="link-row">
         <a href="${meal.google}" target="_blank" rel="noreferrer">Google Maps</a>
-        <a href="${meal.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
       </div>
     </article>
   `;
@@ -754,9 +752,77 @@ function googleRouteLink(day) {
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
-function appleDestinationLink(day) {
-  const destination = day.stops[day.stops.length - 1];
-  return `https://maps.apple.com/?daddr=${destination.lat},${destination.lng}&dirflg=d`;
+function downloadDayGpx(day) {
+  const fileName = `${slugifyFilename(activeRouteOption.label)}-tag-${String(day.day).padStart(2, "0")}-${slugifyFilename(day.title)}.gpx`;
+  downloadTextFile(fileName, buildGpx([day], `${activeRouteOption.label} Tag ${day.day} ${day.title}`), "application/gpx+xml");
+}
+
+function downloadOptionGpx() {
+  const fileName = `${slugifyFilename(activeRouteOption.label)}-${slugifyFilename(activeRouteOption.name)}-alle-tage.gpx`;
+  downloadTextFile(fileName, buildGpx(currentRouteData, `${activeRouteOption.label} ${activeRouteOption.headline}`), "application/gpx+xml");
+}
+
+function buildGpx(days, title) {
+  const routes = days.map((day) => `
+  <rte>
+    <name>${xmlEscape(`Tag ${day.day} - ${day.title}`)}</name>
+    <desc>${xmlEscape(`${day.distance} · ${day.focus} · Autobahnen am Garmin vermeiden`)}</desc>
+${day.stops.map((stop, index) => `    <rtept lat="${stop.lat}" lon="${stop.lng}">
+      <name>${xmlEscape(`${day.day}.${index + 1} ${stop.name}`)}</name>
+      <desc>${xmlEscape(stop.address)}</desc>
+    </rtept>`).join("\n")}
+  </rte>`).join("\n");
+
+  const tracks = days.map((day) => `
+  <trk>
+    <name>${xmlEscape(`Track Tag ${day.day} - ${day.title}`)}</name>
+    <desc>${xmlEscape("Sichtbare Kartenlinie als Referenz, falls Garmin die Route neu berechnet.")}</desc>
+    <trkseg>
+${getRoutePoints(day).map((point) => `      <trkpt lat="${Number(point[0]).toFixed(6)}" lon="${Number(point[1]).toFixed(6)}"></trkpt>`).join("\n")}
+    </trkseg>
+  </trk>`).join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Motorradroute Basel-Caen" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata>
+    <name>${xmlEscape(title)}</name>
+    <desc>${xmlEscape("Motorradroute mit Zwischenstopps. Im Garmin-Gerät Autobahnen vermeiden aktivieren.")}</desc>
+  </metadata>
+${routes}
+${tracks}
+</gpx>
+`;
+}
+
+function downloadTextFile(fileName, content, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 250);
+}
+
+function slugifyFilename(value) {
+  return String(value || "route")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80) || "route";
+}
+
+function xmlEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function mealPlan(day) {
@@ -788,7 +854,6 @@ function makeMeal(label, time, title, stop, note, progress, query) {
     search,
     google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
     embed: mapEmbedLink(query, stop.address),
-    apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`,
     lat: stop.lat,
     lng: stop.lng
   };
@@ -806,8 +871,7 @@ function attractionPlan(day) {
       lng: anchor.lng,
       note: index < 3 ? "direkt als schöner Stopp einplanbar" : "in Routennähe als flexible Pause",
       query,
-      google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
-      apple: `https://maps.apple.com/?q=${encoded}&ll=${anchor.lat},${anchor.lng}`
+      google: `https://www.google.com/maps/search/?api=1&query=${encoded}`
     };
   });
 }
@@ -897,7 +961,7 @@ function attractionCard(attraction) {
   const story = placeStory(attraction.name, "attraction", attraction.note);
   return `
     <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(attraction.name)} öffnen">
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-apple="${attraction.apple}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
+      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -909,7 +973,6 @@ function attractionCard(attraction) {
         <p>${escapeHtml(attraction.note)}</p>
         <div class="link-row">
           <a href="${attraction.google}" target="_blank" rel="noreferrer">Google Maps</a>
-          <a href="${attraction.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
         </div>
       </div>
     </article>
@@ -1090,8 +1153,7 @@ function normalizePlaceResult(card, place, fallbackName, kind) {
     area: card.dataset.placeAddress || "",
     lat: Number.isFinite(placeLat) ? placeLat : card.dataset.placeLat || "",
     lng: Number.isFinite(placeLng) ? placeLng : card.dataset.placeLng || "",
-    google: place.googleMapsUri || card.dataset.placeGoogle || "",
-    apple: card.dataset.placeApple || ""
+    google: place.googleMapsUri || card.dataset.placeGoogle || ""
   };
 }
 
@@ -1108,8 +1170,7 @@ function openPlaceModal(card) {
     area: card.dataset.placeAddress || "",
     lat: card.dataset.placeLat || "",
     lng: card.dataset.placeLng || "",
-    google: card.dataset.placeGoogle || "",
-    apple: card.dataset.placeApple || ""
+    google: card.dataset.placeGoogle || ""
   };
   els.placeModalBody.innerHTML = renderPlaceModalContent(data);
   bindModalPhotoControls();
@@ -1164,7 +1225,6 @@ function renderPlaceModalContent(data) {
       ` : ""}
       <div class="link-row">
         ${data.google ? `<a href="${data.google}" target="_blank" rel="noreferrer">Google Maps</a>` : ""}
-        ${data.apple ? `<a href="${data.apple}" target="_blank" rel="noreferrer">Apple Karten</a>` : ""}
       </div>
       ${hasLocation ? `
         <div class="modal-map-card">
