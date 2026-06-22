@@ -1,14 +1,3 @@
-const hotelImages = [
-  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80",
-  "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=80"
-];
-
 const routeData = [
   {
     day: 1,
@@ -291,9 +280,9 @@ const routeData = [
     distance: "ca. 165 km",
     countries: ["Frankreich"],
     curveFactor: 5,
-    description: "Klassische Vogesenetappe über Munster, Col de la Schlucht, Gérardmer und Épinal nach Nancy.",
-    focus: "Route des Crêtes, Vogesen",
-    riderNotes: ["Col de la Schlucht wetterabhängig prüfen.", "In den Vogesen mit Radfahrern, Splitt und engen Kurven rechnen.", "Der Tag ist kurvig, aber nicht zu lang."],
+    description: "Nordvogesen-Etappe nach Nancy: erst über Munster und Gérardmer, dann ohne unnötigen Dijon-Schlenker weiter nach Lothringen.",
+    focus: "Vogesen, Gérardmer, Nancy",
+    riderNotes: ["Col de la Schlucht wetterabhängig prüfen.", "Kurvige Vogesenstraßen mit vielen Ortsdurchfahrten, deshalb nicht zu spät starten.", "Nancy ist bewusst der nördliche Wendepunkt, danach geht es wieder Richtung Schwarzwald/Basel."],
     highlights: ["Munster", "Col de la Schlucht", "Gérardmer", "Épinal", "Nancy"],
     stops: [
       stop("Colmar", "Colmar", 48.0794, 7.3585),
@@ -311,43 +300,43 @@ const routeData = [
   },
   {
     day: 13,
-    title: "Nancy → Dijon",
-    distance: "ca. 300 km",
-    countries: ["Frankreich"],
-    curveFactor: 3,
-    description: "Südwestliche Rückrunde über Toul, Langres und kleine burgundische Straßen zurück nach Dijon.",
-    focus: "Südlicher Rückbogen, keine Autobahn",
-    riderNotes: ["Langres als Pause einplanen.", "Navigation genau prüfen, sonst zieht sie auf Schnellstraßen.", "Ruhiger Verbindungstag mit vielen Ortsdurchfahrten."],
-    highlights: ["Toul", "Vittel", "Langres", "Dijon"],
+    title: "Nancy → Freiburg",
+    distance: "ca. 210 km",
+    countries: ["Frankreich", "Deutschland"],
+    curveFactor: 5,
+    description: "Von Nancy wieder sauber Richtung Osten und Süden: über Saint-Dié, Col de la Schlucht, Munster und den Schwarzwald nach Freiburg.",
+    focus: "Rückrichtung Basel, Vogesen, Schwarzwald",
+    riderNotes: ["Das ersetzt den alten unlogischen Nancy→Dijon-Schlenker.", "Vogesen und Schwarzwald sind kurvig, aber die Richtung stimmt jetzt wieder Richtung Basel.", "Bei Müdigkeit in Colmar oder Freiburg früher beenden."],
+    highlights: ["Saint-Dié-des-Vosges", "Col de la Schlucht", "Munster", "Freiburg"],
     stops: [
       stop("Nancy", "Nancy", 48.6921, 6.1844),
-      stop("Toul", "Toul", 48.6759, 5.8911),
-      stop("Vittel", "Vittel", 48.2007, 5.9484),
-      stop("Langres", "Langres", 47.8625, 5.3331),
-      stop("Dijon", "Dijon", 47.3220, 5.0415)
+      stop("Saint-Dié-des-Vosges", "Saint-Dié-des-Vosges", 48.2847, 6.9492),
+      stop("Col de la Schlucht", "Col de la Schlucht", 48.0645, 7.0220),
+      stop("Munster", "Munster, Haut-Rhin", 48.0415, 7.1338),
+      stop("Colmar", "Colmar", 48.0794, 7.3585),
+      stop("Freiburg", "Freiburg im Breisgau", 47.9990, 7.8421)
     ],
     hotels: [
-      hotel("Hotel des Ducs", "Dijon Zentrum", "5 Rue Lamonnoye, Dijon", 47.3228, 5.0439, "Parkmöglichkeit vorher prüfen.", "Sehr zentral und angenehm.", "Innenstadtzufahrt."),
-      hotel("Oceania Le Jura Dijon", "Bahnhofsnah", "14 Avenue Foch, Dijon", 47.3236, 5.0273, "Garage/Parkplatz prüfen.", "Komfortabel.", "Städtische Lage."),
-      hotel("Ibis Styles Dijon Central", "Altstadt", "3 Place Grangier, Dijon", 47.3233, 5.0378, "Parkhaus in Nähe prüfen.", "Praktisch für eine Nacht.", "Schlichte Zimmer.")
+      hotel("Motel One Freiburg", "Altstadtnah", "Friedrichring 1, Freiburg", 47.9997, 7.8520, "Zentrale Lage, Tiefgarage in der Umgebung prüfen.", "Sehr praktisch für Abendessen zu Fuß.", "Innenstadt kann beim Gepäck etwas enger sein."),
+      hotel("Mercure Hotel Panorama Freiburg", "Oberhalb der Stadt", "Wintererstr. 89, Freiburg", 48.0066, 7.8712, "Ruhige Lage, Parken vor Buchung bestätigen.", "Toller Blick und entspannter Abschluss.", "Nicht direkt in der Altstadt."),
+      hotel("Hotel Stadt Freiburg", "Westen Freiburg", "Breisacher Str. 84, Freiburg", 48.0001, 7.8259, "Anfahrt und Parken meist unkomplizierter als Altstadt.", "Gute Basis für Weiterfahrt.", "Weniger romantische Lage.")
     ]
   },
   {
     day: 14,
-    title: "Dijon → Basel",
-    distance: "ca. 330 km",
-    countries: ["Frankreich", "Schweiz"],
+    title: "Freiburg → Basel",
+    distance: "ca. 90 km",
+    countries: ["Deutschland", "Schweiz"],
     curveFactor: 4,
-    description: "Finaler Heimweg über Jura-Vorland, Doubs, Belfort und Sundgau zurück nach Basel.",
-    focus: "Jura-Ausläufer, ruhige Rückfahrt",
-    riderNotes: ["Letzter Tag nicht überziehen: früh starten.", "Bei Müdigkeit in Besançon oder Belfort kürzen.", "Schweizer Heimkehrverkehr um Basel beachten."],
-    highlights: ["Dole", "Besançon", "Belfort", "Sundgau", "Basel"],
+    description: "Kurzer Heimtag mit Schwarzwald- und Markgräflerland-Schleife, damit die Rückgabe nach Basel entspannt bleibt.",
+    focus: "Kurzer Heimtag, Schwarzwald, Basel",
+    riderNotes: ["Bewusst kurz gehalten, damit die Reise nicht mit Stress endet.", "Bei schlechtem Wetter kann direkt nach Basel abgekürzt werden.", "Ideal für spätes Frühstück und entspannte Heimfahrt."],
+    highlights: ["Schauinsland", "Münstertal", "Kandern", "Basel"],
     stops: [
-      stop("Dijon", "Dijon", 47.3220, 5.0415),
-      stop("Dole", "Dole", 47.0920, 5.4897),
-      stop("Besançon", "Besançon", 47.2378, 6.0241),
-      stop("Belfort", "Belfort", 47.6397, 6.8638),
-      stop("Altkirch", "Altkirch, Elsass", 47.6237, 7.2396),
+      stop("Freiburg", "Freiburg im Breisgau", 47.9990, 7.8421),
+      stop("Schauinsland", "Schauinsland, 79254 Oberried", 47.9112, 7.8980),
+      stop("Münstertal", "Münstertal/Schwarzwald", 47.8548, 7.7843),
+      stop("Kandern", "Kandern, Deutschland", 47.7138, 7.6607),
       stop("Basel", "Basel, Schweiz", 47.5596, 7.5886)
     ],
     hotels: [
@@ -369,7 +358,6 @@ function stop(name, address, lat, lng) {
 }
 
 function hotel(name, area, address, lat, lng, parking, pro, con) {
-  const image = hotelImages[Math.abs(hashCode(name + area)) % hotelImages.length];
   const profile = hotelProfile(name, area);
   return {
     name,
@@ -382,8 +370,7 @@ function hotel(name, area, address, lat, lng, parking, pro, con) {
     con,
     priceRange: profile.priceRange,
     rating: profile.rating,
-    image,
-    imageLabel: "Hotel-Symbolbild",
+    imageLabel: "Echte Hotelbilder",
     links: makeLinks(name, address, lat, lng)
   };
 }
@@ -406,19 +393,12 @@ function hotelProfile(name, area) {
   return { priceRange: "ca. 90-190 EUR/Nacht", rating: "Google Maps Sterne live prüfen" };
 }
 
-function hashCode(value) {
-  let hash = 0;
-  for (let index = 0; index < value.length; index += 1) {
-    hash = ((hash << 5) - hash) + value.charCodeAt(index);
-    hash |= 0;
-  }
-  return hash;
-}
 
 function makeLinks(name, address, lat, lng) {
   const query = encodeURIComponent(`${name} ${address}`);
   return {
     google: `https://www.google.com/maps/search/?api=1&query=${query}`,
+    photos: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${address} Fotos`)}`,
     apple: `https://maps.apple.com/?q=${query}&ll=${lat},${lng}`,
     osm: `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=14/${lat}/${lng}`
   };

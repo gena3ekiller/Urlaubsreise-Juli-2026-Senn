@@ -43,7 +43,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=3");
+    const response = await fetch("./data/routeGeometry.json?v=5");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
@@ -243,10 +243,10 @@ function stopCard(stop, index, dayNumber) {
 function hotelCard(hotel) {
   return `
     <article class="hotel-card">
-      <div class="hotel-image">
-        <img src="${hotel.image}" alt="${escapeHtml(hotel.imageLabel)} für ${escapeHtml(hotel.name)}" loading="lazy" />
+      <a class="hotel-photo-link" href="${hotel.links.photos}" target="_blank" rel="noreferrer">
         <span>${escapeHtml(hotel.imageLabel)}</span>
-      </div>
+        <strong>auf Google Maps öffnen</strong>
+      </a>
       <div class="hotel-content">
         <p class="hotel-area">${escapeHtml(hotel.area)}</p>
         <h4>${escapeHtml(hotel.name)}</h4>
@@ -262,8 +262,9 @@ function hotelCard(hotel) {
           <div><dt>Nachteil</dt><dd>${escapeHtml(hotel.con)}</dd></div>
         </dl>
         <div class="link-row">
-          <a href="${hotel.links.google}" target="_blank" rel="noreferrer">Google</a>
-          <a href="${hotel.links.apple}" target="_blank" rel="noreferrer">Apple</a>
+          <a href="${hotel.links.google}" target="_blank" rel="noreferrer">Google Maps</a>
+          <a href="${hotel.links.photos}" target="_blank" rel="noreferrer">Hotelbilder</a>
+          <a href="${hotel.links.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
         </div>
       </div>
     </article>

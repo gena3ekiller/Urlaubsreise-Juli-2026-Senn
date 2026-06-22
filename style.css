@@ -610,44 +610,48 @@ h4 {
   overflow: hidden;
 }
 
-.hotel-image {
+ .hotel-photo-link {
   position: relative;
   display: grid;
   place-items: center;
   min-height: 126px;
+  gap: 6px;
   overflow: hidden;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
   background:
-    linear-gradient(135deg, rgba(84, 214, 255, 0.24), rgba(255, 184, 77, 0.17)),
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.08) 0 8px, transparent 8px 16px),
+    linear-gradient(135deg, rgba(255, 184, 77, 0.24), rgba(84, 214, 255, 0.16)),
     #131a23;
 }
 
-.hotel-image img {
+.hotel-photo-link::before {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: saturate(0.94) contrast(1.04);
-}
-
-.hotel-image::after {
-  position: absolute;
-  inset: 0;
+  inset: 16px;
   content: "";
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.42));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
 }
 
-.hotel-image span {
+.hotel-photo-link span,
+.hotel-photo-link strong {
   position: relative;
   z-index: 1;
+}
+
+.hotel-photo-link span {
   border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.38);
+  background: rgba(0, 0, 0, 0.34);
   color: var(--soft);
   padding: 8px 12px;
   font-size: 0.86rem;
   font-weight: 800;
+}
+
+.hotel-photo-link strong {
+  color: var(--accent);
+  font-size: 0.92rem;
 }
 
 .hotel-content {
