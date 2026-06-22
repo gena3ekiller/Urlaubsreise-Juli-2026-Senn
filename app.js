@@ -43,7 +43,7 @@ async function init() {
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=8");
+    const response = await fetch("./data/routeGeometry.json?v=9");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
     const payload = await response.json();
     routeGeometryData = payload.geometry || {};
