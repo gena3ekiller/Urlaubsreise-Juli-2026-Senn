@@ -370,6 +370,7 @@ function stop(name, address, lat, lng) {
 
 function hotel(name, area, address, lat, lng, parking, pro, con) {
   const image = hotelImages[Math.abs(hashCode(name + area)) % hotelImages.length];
+  const profile = hotelProfile(name, area);
   return {
     name,
     area,
@@ -379,10 +380,30 @@ function hotel(name, area, address, lat, lng, parking, pro, con) {
     parking,
     pro,
     con,
+    priceRange: profile.priceRange,
+    rating: profile.rating,
     image,
     imageLabel: "Hotel-Symbolbild",
     links: makeLinks(name, address, lat, lng)
   };
+}
+
+function hotelProfile(name, area) {
+  const text = `${name} ${area}`.toLowerCase();
+
+  if (text.includes("rosenhof")) return { priceRange: "ca. 80-130 EUR/Nacht", rating: "Google Maps: ca. 4+ Sterne live prüfen" };
+  if (text.includes("circle inn")) return { priceRange: "ca. 160-190 EUR/Nacht", rating: "Google Maps: ca. 4+ Sterne live prüfen" };
+  if (text.includes("schloss")) return { priceRange: "ca. 130-180 EUR/Nacht", rating: "Google Maps: ca. 4+ Sterne live prüfen" };
+  if (text.includes("best western premier") || text.includes("vertigo") || text.includes("leprince") || text.includes("hilton")) {
+    return { priceRange: "ca. 150-260 EUR/Nacht", rating: "Google Maps: sehr gut prüfen" };
+  }
+  if (text.includes("mercure") || text.includes("novotel") || text.includes("oceania") || text.includes("james")) {
+    return { priceRange: "ca. 110-210 EUR/Nacht", rating: "Google Maps: gut bis sehr gut prüfen" };
+  }
+  if (text.includes("ibis") || text.includes("kyriad") || text.includes("b&b")) {
+    return { priceRange: "ca. 70-150 EUR/Nacht", rating: "Google Maps: solide prüfen" };
+  }
+  return { priceRange: "ca. 90-190 EUR/Nacht", rating: "Google Maps Sterne live prüfen" };
 }
 
 function hashCode(value) {

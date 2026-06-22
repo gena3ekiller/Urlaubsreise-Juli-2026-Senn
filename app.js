@@ -181,6 +181,13 @@ function renderDetails(day) {
       <p class="gpx-note">Finale GPX am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
     </article>
 
+    <section class="detail-card">
+      <h3>Essen nach Etappenfortschritt</h3>
+      <div class="meal-grid">
+        ${mealPlan(day).map(mealCard).join("")}
+      </div>
+    </section>
+
     ${day.food ? `
       <section class="detail-card">
         <h3>Diner & Abendessen</h3>
@@ -245,6 +252,10 @@ function hotelCard(hotel) {
         <h4>${escapeHtml(hotel.name)}</h4>
         <p>${escapeHtml(hotel.address)}</p>
         <small>${hotel.lat.toFixed(4)}, ${hotel.lng.toFixed(4)}</small>
+        <div class="hotel-facts">
+          <span>${escapeHtml(hotel.priceRange)}</span>
+          <span>${escapeHtml(hotel.rating)}</span>
+        </div>
         <dl>
           <div><dt>Parken</dt><dd>${escapeHtml(hotel.parking)}</dd></div>
           <div><dt>Vorteil</dt><dd>${escapeHtml(hotel.pro)}</dd></div>
@@ -254,6 +265,26 @@ function hotelCard(hotel) {
           <a href="${hotel.links.google}" target="_blank" rel="noreferrer">Google</a>
           <a href="${hotel.links.apple}" target="_blank" rel="noreferrer">Apple</a>
         </div>
+      </div>
+    </article>
+  `;
+}
+
+function mealCard(meal) {
+  return `
+    <article class="meal-card">
+      <div class="meal-time">
+        <span>${escapeHtml(meal.label)}</span>
+        <strong>${escapeHtml(meal.time)}</strong>
+      </div>
+      <h4>${escapeHtml(meal.title)}</h4>
+      <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
+      <div class="meal-progress">
+        <span style="width: ${meal.progress}%"></span>
+      </div>
+      <div class="link-row">
+        <a href="${meal.google}" target="_blank" rel="noreferrer">Google Maps</a>
+        <a href="${meal.apple}" target="_blank" rel="noreferrer">Apple Karten</a>
       </div>
     </article>
   `;
@@ -351,6 +382,36 @@ function appleDestinationLink(day) {
   return `https://maps.apple.com/?daddr=${destination.lat},${destination.lng}&dirflg=d`;
 }
 
+function mealPlan(day) {
+  const breakfastStop = day.stops[Math.min(1, day.stops.length - 1)];
+  const lunchStop = day.stops[Math.floor((day.stops.length - 1) * 0.52)];
+  const dinnerStop = day.stops[day.stops.length - 1];
+  const dinnerQuery = day.day === 1
+    ? "American diner BBQ restaurant"
+    : "gutes Restaurant";
+
+  return [
+    makeMeal("Frühstück", "08:00-09:00", "Café oder Bäckerei", breakfastStop, "früh am Tagesstart, bevor die längeren Landstraßen kommen", 12, "cafe frühstück bäckerei"),
+    makeMeal("Mittag", "12:30-14:00", "Bistro oder Brasserie", lunchStop, "ungefähr zur Tagesmitte, gut für Fahrerpause und Flüssigkeit", 52, "restaurant bistro brasserie lunch"),
+    makeMeal("Abendessen", "18:30-20:30", day.day === 1 ? "Diner / BBQ im Ramstein-Umfeld" : "Restaurant am Zielort", dinnerStop, "erst nach Ankunft und Hotel-Check-in", 95, dinnerQuery)
+  ];
+}
+
+function makeMeal(label, time, title, stop, note, progress, query) {
+  const search = `${query} ${stop.name} ${stop.address}`;
+  const encoded = encodeURIComponent(search);
+  return {
+    label,
+    time,
+    title,
+    place: stop.name,
+    note,
+    progress,
+    google: `https://www.google.com/maps/search/?api=1&query=${encoded}`,
+    apple: `https://maps.apple.com/?q=${encoded}&ll=${stop.lat},${stop.lng}`
+  };
+}
+
 function daySearchText(day) {
   return [
     day.title,
@@ -360,6 +421,7 @@ function daySearchText(day) {
     day.description,
     day.highlights.join(" "),
     day.food?.join(" ") || "",
+    mealPlan(day).map((meal) => `${meal.label} ${meal.title} ${meal.place}`).join(" "),
     day.stops.map((stop) => `${stop.name} ${stop.address}`).join(" "),
     day.hotels.map((hotel) => `${hotel.name} ${hotel.area} ${hotel.address}`).join(" ")
   ].join(" ");
