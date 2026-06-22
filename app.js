@@ -779,6 +779,8 @@ function normalizePlaceResult(card, place, fallbackName, kind) {
     kind,
     note: card.dataset.placeNote || "",
     area: card.dataset.placeAddress || "",
+    lat: card.dataset.placeLat || "",
+    lng: card.dataset.placeLng || "",
     google: card.dataset.placeGoogle || "",
     apple: card.dataset.placeApple || ""
   };
@@ -793,10 +795,13 @@ function openPlaceModal(card) {
     photos: [],
     note: card.dataset.placeNote || "",
     area: card.dataset.placeAddress || "",
+    lat: card.dataset.placeLat || "",
+    lng: card.dataset.placeLng || "",
     google: card.dataset.placeGoogle || "",
     apple: card.dataset.placeApple || ""
   };
   els.placeModalBody.innerHTML = renderPlaceModalContent(data);
+  bindModalPhotoControls();
   els.placeModal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
   els.placeModal.querySelector(".place-modal-close")?.focus();
@@ -811,8 +816,16 @@ function closePlaceModal() {
 
 function renderPlaceModalContent(data) {
   const hero = data.photos.length
-    ? `<div class="modal-photo-carousel">${data.photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(data.name)} Foto ${index + 1}" loading="lazy" referrerpolicy="origin-when-cross-origin" />`).join("")}</div>`
+    ? `<div class="modal-photo-wrap">
+        <div class="modal-photo-carousel" data-modal-carousel>${data.photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(data.name)} Foto ${index + 1}" loading="lazy" referrerpolicy="origin-when-cross-origin" />`).join("")}</div>
+        ${data.photos.length > 1 ? `
+          <button class="modal-photo-nav modal-photo-prev" type="button" data-modal-prev aria-label="Vorheriges Bild">‹</button>
+          <button class="modal-photo-nav modal-photo-next" type="button" data-modal-next aria-label="Nächstes Bild">›</button>
+          <div class="modal-photo-count" data-modal-count>1 / ${data.photos.length}</div>
+        ` : ""}
+      </div>`
     : `<div class="modal-photo-empty"><span>Keine Fotos</span><strong>${escapeHtml(data.name)}</strong></div>`;
+  const hasLocation = data.lat && data.lng;
   return `
     ${hero}
     <div class="modal-info">
@@ -823,12 +836,39 @@ function renderPlaceModalContent(data) {
         <span>${escapeHtml(data.price)}</span>
       </div>
       ${data.note ? `<p>${escapeHtml(data.note)}</p>` : ""}
+      ${hasLocation ? `
+        <div class="modal-location">
+          <span>Standort</span>
+          <strong>${Number(data.lat).toFixed(5)}, ${Number(data.lng).toFixed(5)}</strong>
+          <small>${escapeHtml(data.area || data.name)}</small>
+        </div>
+      ` : ""}
       <div class="link-row">
         ${data.google ? `<a href="${data.google}" target="_blank" rel="noreferrer">Google Maps</a>` : ""}
         ${data.apple ? `<a href="${data.apple}" target="_blank" rel="noreferrer">Apple Karten</a>` : ""}
       </div>
     </div>
   `;
+}
+
+function bindModalPhotoControls() {
+  const carousel = els.placeModalBody.querySelector("[data-modal-carousel]");
+  if (!carousel) return;
+  const images = [...carousel.querySelectorAll("img")];
+  const count = els.placeModalBody.querySelector("[data-modal-count]");
+  const updateCount = () => {
+    if (!count || !images.length) return;
+    const index = Math.round(carousel.scrollLeft / Math.max(1, carousel.clientWidth));
+    count.textContent = `${Math.min(images.length, index + 1)} / ${images.length}`;
+  };
+  els.placeModalBody.querySelector("[data-modal-prev]")?.addEventListener("click", () => {
+    carousel.scrollBy({ left: -carousel.clientWidth, behavior: "smooth" });
+  });
+  els.placeModalBody.querySelector("[data-modal-next]")?.addEventListener("click", () => {
+    carousel.scrollBy({ left: carousel.clientWidth, behavior: "smooth" });
+  });
+  carousel.addEventListener("scroll", () => window.requestAnimationFrame(updateCount));
+  updateCount();
 }
 
 function googlePhotoUrl(photoName) {
