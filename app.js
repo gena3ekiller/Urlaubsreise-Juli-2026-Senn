@@ -22,6 +22,7 @@ let activeDay = routeData[0];
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
 let activeRouteLayer = L.layerGroup();
+let modalMap = null;
 
 const map = L.map("map", {
   zoomControl: false,
@@ -787,6 +788,7 @@ function normalizePlaceResult(card, place, fallbackName, kind) {
 }
 
 function openPlaceModal(card) {
+  destroyModalMap();
   const data = card.__placeResult || {
     name: card.dataset.placeTitle || card.dataset.placeQuery || "Details",
     rating: "Bewertung live prüfen",
@@ -805,10 +807,12 @@ function openPlaceModal(card) {
   els.placeModal.setAttribute("aria-hidden", "false");
   document.body.classList.add("modal-open");
   els.placeModal.querySelector(".place-modal-close")?.focus();
+  window.requestAnimationFrame(() => renderPlaceModalMap(data));
 }
 
 function closePlaceModal() {
   if (!els.placeModal || els.placeModal.getAttribute("aria-hidden") === "true") return;
+  destroyModalMap();
   els.placeModal.setAttribute("aria-hidden", "true");
   els.placeModalBody.innerHTML = "";
   document.body.classList.remove("modal-open");
@@ -847,8 +851,46 @@ function renderPlaceModalContent(data) {
         ${data.google ? `<a href="${data.google}" target="_blank" rel="noreferrer">Google Maps</a>` : ""}
         ${data.apple ? `<a href="${data.apple}" target="_blank" rel="noreferrer">Apple Karten</a>` : ""}
       </div>
+      ${hasLocation ? `
+        <div class="modal-map-card">
+          <div class="modal-map-head">
+            <span>Kartenansicht</span>
+            <strong>${escapeHtml(data.name)}</strong>
+          </div>
+          <div class="modal-map" data-modal-map aria-label="Kartenansicht von ${escapeHtml(data.name)}"></div>
+        </div>
+      ` : ""}
     </div>
   `;
+}
+
+function renderPlaceModalMap(data) {
+  const container = els.placeModalBody.querySelector("[data-modal-map]");
+  const lat = Number(data.lat);
+  const lng = Number(data.lng);
+  if (!container || !Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+  modalMap = L.map(container, {
+    zoomControl: false,
+    scrollWheelZoom: false,
+    tap: true
+  }).setView([lat, lng], 13);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 18,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(modalMap);
+
+  L.control.zoom({ position: "bottomright" }).addTo(modalMap);
+  L.marker([lat, lng]).addTo(modalMap).bindPopup(escapeHtml(data.name));
+
+  window.setTimeout(() => modalMap?.invalidateSize(), 120);
+}
+
+function destroyModalMap() {
+  if (!modalMap) return;
+  modalMap.remove();
+  modalMap = null;
 }
 
 function bindModalPhotoControls() {
@@ -873,8 +915,8 @@ function bindModalPhotoControls() {
 
 function googlePhotoUrl(photoName) {
   const params = new URLSearchParams({
-    maxWidthPx: "920",
-    maxHeightPx: "560",
+    maxWidthPx: "1800",
+    maxHeightPx: "1200",
     key: window.GOOGLE_MAPS_API_KEY
   });
   return `https://places.googleapis.com/v1/${photoName}/media?${params.toString()}`;

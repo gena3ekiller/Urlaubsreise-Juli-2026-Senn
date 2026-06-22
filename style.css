@@ -1816,6 +1816,44 @@ body.modal-open {
   font-weight: 800;
 }
 
+.modal-map-card {
+  display: grid;
+  gap: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(84, 214, 255, 0.24);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.modal-map-head {
+  display: grid;
+  gap: 2px;
+  padding: 13px 14px 0;
+}
+
+.modal-map-head span {
+  color: var(--accent-2);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.modal-map-head strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.modal-map {
+  min-height: 240px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: #101720;
+}
+
+.modal-map .leaflet-control-attribution {
+  font-size: 0.62rem;
+}
+
 .place-open-card {
   cursor: pointer;
 }
@@ -1866,5 +1904,9 @@ body.modal-open {
 
   .modal-info {
     padding: 18px;
+  }
+
+  .modal-map {
+    min-height: 210px;
   }
 }
