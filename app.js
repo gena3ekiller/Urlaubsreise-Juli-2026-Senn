@@ -601,7 +601,7 @@ function makeMeal(label, time, title, stop, note, progress, query) {
 
 function attractionPlan(day) {
   return day.highlights.slice(0, 6).map((name, index) => {
-    const anchor = day.stops[Math.min(index + 1, day.stops.length - 1)];
+    const anchor = matchingHighlightStop(day, name, index);
     const query = `${name} ${anchor.address}`;
     const encoded = encodeURIComponent(query);
     return {
@@ -615,6 +615,17 @@ function attractionPlan(day) {
       apple: `https://maps.apple.com/?q=${encoded}&ll=${anchor.lat},${anchor.lng}`
     };
   });
+}
+
+function matchingHighlightStop(day, name, index) {
+  const target = normalize(name);
+  const exact = day.stops.find((stop) => {
+    const stopName = normalize(stop.name);
+    const stopAddress = normalize(stop.address);
+    return stopName === target || stopName.includes(target) || target.includes(stopName) || stopAddress.includes(target);
+  });
+  if (exact) return exact;
+  return day.stops[Math.min(index + 1, day.stops.length - 1)];
 }
 
 function attractionCard(attraction) {
@@ -701,24 +712,45 @@ async function loadPlaceCard(card) {
 }
 
 async function searchPlaceRestApi({ query, lat, lng, kind }) {
-  const includedType = kind === "hotel" ? "lodging" : kind === "restaurant" ? "restaurant" : "tourist_attraction";
-  const body = {
+  const baseBody = {
     textQuery: query,
-    includedType,
     languageCode: "de",
     regionCode: "DE",
     maxResultCount: 5
   };
 
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
-    body.locationBias = {
+    baseBody.locationBias = {
       circle: {
         center: { latitude: lat, longitude: lng },
-        radius: kind === "hotel" ? 700 : kind === "restaurant" ? 2200 : 4200
+        radius: kind === "hotel" ? 700 : kind === "restaurant" ? 2200 : 12000
       }
     };
   }
 
+  const typedBody = { ...baseBody };
+  if (kind === "hotel") typedBody.includedType = "lodging";
+  if (kind === "restaurant") typedBody.includedType = "restaurant";
+
+  const searchBodies = kind === "attraction"
+    ? [
+        baseBody,
+        { ...baseBody, textQuery: `${query} Sehenswürdigkeit` },
+        { ...baseBody, textQuery: `${query} Altstadt Zentrum` },
+        { ...baseBody, includedType: "tourist_attraction" }
+      ]
+    : [typedBody, baseBody];
+
+  for (const body of searchBodies) {
+    const place = await fetchGooglePlace(body);
+    if (place?.photos?.length) return place;
+    if (place && body === searchBodies[searchBodies.length - 1]) return place;
+  }
+
+  return null;
+}
+
+async function fetchGooglePlace(body) {
   const response = await fetch(PLACES_TEXT_SEARCH_URL, {
     method: "POST",
     headers: {
@@ -778,6 +810,8 @@ function renderPlaceResult(card, place, fallbackName, kind) {
 function normalizePlaceResult(card, place, fallbackName, kind) {
   const photos = (place.photos || []).slice(0, 8).map((photo) => photo.name ? googlePhotoUrl(photo.name) : "").filter(Boolean);
   const fallbackTitle = card.dataset.placeTitle || fallbackName;
+  const placeLat = place.location?.latitude;
+  const placeLng = place.location?.longitude;
   return {
     name: place.displayName?.text || place.displayName || fallbackTitle,
     rating: place.rating ? `${Number(place.rating).toFixed(1)} Sterne` : "Bewertung live prüfen",
@@ -787,9 +821,9 @@ function normalizePlaceResult(card, place, fallbackName, kind) {
     kind,
     note: card.dataset.placeNote || "",
     area: card.dataset.placeAddress || "",
-    lat: card.dataset.placeLat || "",
-    lng: card.dataset.placeLng || "",
-    google: card.dataset.placeGoogle || "",
+    lat: Number.isFinite(placeLat) ? placeLat : card.dataset.placeLat || "",
+    lng: Number.isFinite(placeLng) ? placeLng : card.dataset.placeLng || "",
+    google: place.googleMapsUri || card.dataset.placeGoogle || "",
     apple: card.dataset.placeApple || ""
   };
 }
