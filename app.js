@@ -12,6 +12,7 @@ const els = {
   printScope: document.querySelector("#printScope"),
   printDayPicker: document.querySelector("#printDayPicker"),
   mapToggle: document.querySelector("#mapToggleBtn"),
+  routeOptions: document.querySelector("#routeOptions"),
   placeModal: document.querySelector("#placeModal"),
   placeModalBody: document.querySelector("#placeModalBody")
 };
@@ -21,8 +22,24 @@ const dayColorOverrides = {
   13: "#e879f9"
 };
 let routeGeometryData = {};
-let allRoutePoints = routeData.flatMap((day) => getRoutePoints(day));
-let activeDay = routeData[0];
+let routeGeometryPayload = {};
+const availableRouteOptions = typeof routeOptions !== "undefined"
+  ? routeOptions
+  : [{
+      id: "option-a",
+      label: "Option A",
+      name: "Aktuelle Route",
+      headline: "Basel → Caen → Basel",
+      totalKm: "~2.680 km",
+      countries: 3,
+      days: typeof routeData !== "undefined" ? routeData : [],
+      summary: "Aktuelle Planung",
+      strengths: []
+    }];
+let activeRouteOption = availableRouteOptions[0];
+let currentRouteData = activeRouteOption.days;
+let allRoutePoints = currentRouteData.flatMap((day) => getRoutePoints(day));
+let activeDay = currentRouteData[0];
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
 let activeRouteLayer = L.layerGroup();
@@ -47,30 +64,32 @@ activeRouteLayer.addTo(map);
 
 async function init() {
   await loadRouteGeometry();
-  renderDayList(routeData);
-  renderPrintDayPicker();
-  renderAllRoutes();
-  selectDay(1, { fit: false });
-  fitAll();
+  renderRouteOptions();
+  selectRouteOption(activeRouteOption.id, { showOverview: true, fit: false });
   bindEvents();
+  fitAll();
 }
 
 async function loadRouteGeometry() {
   try {
-    const response = await fetch("./data/routeGeometry.json?v=11");
+    const response = await fetch("./data/routeGeometry.json?v=12");
     if (!response.ok) throw new Error(`Route geometry HTTP ${response.status}`);
-    const payload = await response.json();
-    routeGeometryData = payload.geometry || {};
-    allRoutePoints = routeData.flatMap((day) => getRoutePoints(day));
+    routeGeometryPayload = await response.json();
+    setActiveRouteGeometry();
   } catch (error) {
     console.warn("Straßengeometrie konnte nicht geladen werden, nutze Zwischenpunkte.", error);
   }
 }
 
+function setActiveRouteGeometry() {
+  routeGeometryData = routeGeometryPayload.options?.[activeRouteOption.id] || routeGeometryPayload.geometry || {};
+  allRoutePoints = currentRouteData.flatMap((day) => getRoutePoints(day));
+}
+
 function bindEvents() {
   els.search.addEventListener("input", () => {
     const query = normalize(els.search.value);
-    const filtered = routeData.filter((day) => normalize(daySearchText(day)).includes(query));
+    const filtered = currentRouteData.filter((day) => normalize(daySearchText(day)).includes(query));
     renderDayList(filtered);
   });
 
@@ -102,6 +121,104 @@ function bindEvents() {
       focusDay(activeDay, { padding: true });
     }, 140);
   });
+}
+
+function renderRouteOptions() {
+  if (!els.routeOptions) return;
+  els.routeOptions.innerHTML = availableRouteOptions.map((option) => routeOptionButton(option)).join("");
+  els.routeOptions.querySelectorAll("[data-route-option]").forEach((button) => {
+    button.addEventListener("click", () => selectRouteOption(button.dataset.routeOption));
+  });
+}
+
+function routeOptionButton(option) {
+  const first = option.days[0];
+  const last = option.days[option.days.length - 1];
+  return `
+    <button class="route-option-chip${option.id === activeRouteOption.id ? " active" : ""}" type="button" data-route-option="${escapeHtmlAttr(option.id)}">
+      <span>${escapeHtml(option.label)}</span>
+      <strong>${escapeHtml(option.name)}</strong>
+      <small>${escapeHtml(option.totalKm)} · ${option.days.length} Tage · ${escapeHtml(first.stops[0].name)} bis ${escapeHtml(last.stops[last.stops.length - 1].name)}</small>
+    </button>
+  `;
+}
+
+function selectRouteOption(optionId, settings = {}) {
+  activeRouteOption = availableRouteOptions.find((option) => option.id === optionId) || availableRouteOptions[0];
+  currentRouteData = activeRouteOption.days;
+  activeDay = currentRouteData[0];
+  setActiveRouteGeometry();
+  closePrintMenu();
+  els.search.value = "";
+  renderRouteOptions();
+  updateTripSummary();
+  renderDayList(currentRouteData);
+  renderPrintDayPicker();
+  renderAllRoutes();
+  renderOverviewMarkers();
+  if (settings.showOverview) {
+    renderRouteComparison();
+  } else {
+    selectDay(1, { fit: settings.fit !== false });
+  }
+  if (settings.fit !== false) fitAll();
+}
+
+function updateTripSummary() {
+  const stats = document.querySelectorAll(".trip-summary div");
+  if (stats[0]) stats[0].innerHTML = `<strong>${activeRouteOption.countries}</strong><span>Länder</span>`;
+  if (stats[1]) stats[1].innerHTML = `<strong>${currentRouteData.length}</strong><span>Etappen</span>`;
+  if (stats[2]) stats[2].innerHTML = `<strong>${escapeHtml(activeRouteOption.totalKm.replace(/\s*km$/i, ""))}</strong><span>km</span>`;
+}
+
+function renderRouteComparison() {
+  els.details.innerHTML = `
+    <section class="route-choice-hero">
+      <p class="eyebrow">Routenvorschläge</p>
+      <h2>Welche 9-Tage-Tour soll angezeigt werden?</h2>
+      <p class="description">Beide Varianten sind als Motorradroute ohne Autobahn gedacht. Nach der Auswahl wechseln Karte, Tagesliste, Hotels, Essenspausen, Sehenswürdigkeiten und Druckansicht komplett auf die gewählte Option.</p>
+      <div class="route-choice-grid">
+        ${availableRouteOptions.map(routeChoiceCard).join("")}
+      </div>
+    </section>
+  `;
+  els.details.querySelectorAll("[data-route-choice]").forEach((button) => {
+    button.addEventListener("click", () => selectRouteOption(button.dataset.routeChoice, { showOverview: false }));
+  });
+}
+
+function routeChoiceCard(option) {
+  const distanceWarning = option.days.find((day) => Number((day.distance.match(/\d+/) || [0])[0]) > 370);
+  return `
+    <article class="route-choice-card${option.id === activeRouteOption.id ? " active" : ""}">
+      <div class="route-choice-head">
+        <span>${escapeHtml(option.label)}</span>
+        <strong>${escapeHtml(option.totalKm)}</strong>
+      </div>
+      <h3>${escapeHtml(option.headline)}</h3>
+      <p>${escapeHtml(option.summary)}</p>
+      <dl class="route-choice-stats">
+        <div><dt>Tage</dt><dd>${option.days.length}</dd></div>
+        <div><dt>Länder</dt><dd>${option.countries}</dd></div>
+        <div><dt>Max. Tag</dt><dd>${escapeHtml(maxDistanceLabel(option.days))}</dd></div>
+      </dl>
+      ${distanceWarning ? `<p class="route-warning">Hinweis: ${escapeHtml(distanceWarning.title)} liegt mit ${escapeHtml(distanceWarning.distance)} bewusst über 370 km.</p>` : ""}
+      <ol class="route-choice-days">
+        ${option.days.map((day) => `<li><span>Tag ${day.day}</span><strong>${escapeHtml(day.title)}</strong><small>${escapeHtml(day.distance)} · ${escapeHtml(day.focus)}</small></li>`).join("")}
+      </ol>
+      <ul class="route-choice-strengths">
+        ${option.strengths.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+      <button type="button" data-route-choice="${escapeHtmlAttr(option.id)}">${escapeHtml(option.label)} anzeigen</button>
+    </article>
+  `;
+}
+
+function maxDistanceLabel(days) {
+  return days.reduce((max, day) => {
+    const value = Number((day.distance.match(/\d+/) || [0])[0]);
+    return value > max.value ? { value, label: day.distance } : max;
+  }, { value: 0, label: "" }).label;
 }
 
 function toggleMapPanel() {
@@ -155,7 +272,7 @@ function renderDayList(days) {
 }
 
 function renderPrintDayPicker() {
-  els.printDayPicker.innerHTML = routeData.map((day) => `
+  els.printDayPicker.innerHTML = currentRouteData.map((day) => `
     <label>
       <input type="checkbox" value="${day.day}" checked />
       <span>Tag ${day.day}</span>
@@ -174,10 +291,10 @@ function printRouteSelection() {
 }
 
 function getPrintDays() {
-  if (els.printScope.value === "all") return routeData;
+  if (els.printScope.value === "all") return currentRouteData;
   if (els.printScope.value === "custom") {
     const selected = [...els.printDayPicker.querySelectorAll("input:checked")].map((input) => Number(input.value));
-    return routeData.filter((day) => selected.includes(day.day));
+    return currentRouteData.filter((day) => selected.includes(day.day));
   }
   return [activeDay];
 }
@@ -190,11 +307,11 @@ function getPrintOptions() {
 }
 
 function renderPrintView(days, options) {
-  const scopeText = days.length === routeData.length ? `Alle ${routeData.length} Tage` : days.map((day) => `Tag ${day.day}`).join(", ");
+  const scopeText = days.length === currentRouteData.length ? `Alle ${currentRouteData.length} Tage` : days.map((day) => `Tag ${day.day}`).join(", ");
   return `
     <div class="print-document">
       <header class="print-title">
-        <p>Motorradreise Juli 2026 · Basel - Caen - Basel</p>
+        <p>Motorradreise Juli 2026 · ${escapeHtml(activeRouteOption.label)} · ${escapeHtml(activeRouteOption.headline)}</p>
         <h1>${escapeHtml(scopeText)}</h1>
         <span>Landstraßenroute mit Autobahnvermeidung · Stand ${new Date().toLocaleDateString("de-DE")}</span>
       </header>
@@ -250,7 +367,7 @@ function printSection(title, items) {
 
 function renderAllRoutes() {
   routeLayer.clearLayers();
-  routeData.forEach((day) => {
+  currentRouteData.forEach((day) => {
     L.polyline(getRoutePoints(day), {
       color: getDayColor(day),
       weight: 4,
@@ -262,7 +379,7 @@ function renderAllRoutes() {
 }
 
 function selectDay(dayNumber, options = { fit: true }) {
-  activeDay = routeData.find((day) => day.day === dayNumber) || routeData[0];
+  activeDay = currentRouteData.find((day) => day.day === dayNumber) || currentRouteData[0];
   document.querySelectorAll(".day-card").forEach((card) => card.classList.remove("active"));
   document.querySelector(`.day-card[data-day="${activeDay.day}"]`)?.classList.add("active");
   renderActiveRoute(activeDay);
@@ -328,9 +445,9 @@ function renderDetails(day) {
       <div class="route-actions">
         <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">Google Tagesroute</a>
         <a href="${appleDestinationLink(day)}" target="_blank" rel="noreferrer">Apple Ziel</a>
-        <button type="button" onclick="focusDay(routeData[${day.day - 1}])">Tag fokussieren</button>
+        <button type="button" data-focus-active-day>Tag fokussieren</button>
       </div>
-      <p class="gpx-note">Kartenlinie ist mit Autobahn/Maut vermeiden berechnet. Finale GPX trotzdem am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
+      <p class="gpx-note">Kartenlinie ist über bewusst gesetzte Landstraßen-Zwischenpunkte vorbereitet. Finale GPX am besten in Kurviger, Calimoto oder ADAC mit „Autobahn vermeiden“ und „kurvig“ erzeugen.</p>
     </article>
 
     <section class="detail-card overview-card">
@@ -411,6 +528,7 @@ function renderDetails(day) {
       </div>
     </section>
   `;
+  els.details.querySelector("[data-focus-active-day]")?.addEventListener("click", () => focusDay(activeDay));
   hydratePlacePhotos();
 }
 
@@ -550,9 +668,9 @@ function fitAll() {
 
 function renderOverviewMarkers() {
   markerLayer.clearLayers();
-  routeData.forEach((day, index) => {
+  currentRouteData.forEach((day, index) => {
     const start = day.stops[0];
-    const position = offsetDuplicate(start, index, routeData.map((item) => item.stops[0]));
+    const position = offsetDuplicate(start, index, currentRouteData.map((item) => item.stops[0]));
     const color = getDayColor(day);
     const marker = L.marker(position, {
       icon: overviewIcon(day.day, color),
@@ -640,14 +758,15 @@ function mealPlan(day) {
   const breakfastStop = day.stops[Math.min(1, day.stops.length - 1)];
   const lunchStop = day.stops[Math.floor((day.stops.length - 1) * 0.52)];
   const dinnerStop = day.stops[day.stops.length - 1];
-  const dinnerQuery = day.day === 1
+  const hasUsaDinner = day.usaSpots || /ramstein|landstuhl|kaiserslautern/i.test(`${day.title} ${day.focus}`);
+  const dinnerQuery = hasUsaDinner
     ? "The BBQ Connection Ramstein American BBQ diner"
     : "gutes Restaurant";
 
   return [
     makeMeal("Frühstück", "08:00-09:00", "Café oder Bäckerei", breakfastStop, "früh am Tagesstart, bevor die längeren Landstraßen kommen", 12, "cafe frühstück bäckerei"),
     makeMeal("Mittag", "12:30-14:00", "Bistro oder Brasserie", lunchStop, "ungefähr zur Tagesmitte, gut für Fahrerpause und Flüssigkeit", 52, "restaurant bistro brasserie lunch"),
-    makeMeal("Abendessen", "18:30-20:30", day.day === 1 ? "Diner / BBQ im Ramstein-Umfeld" : "Restaurant am Zielort", dinnerStop, "erst nach Ankunft und Hotel-Check-in", 95, dinnerQuery)
+    makeMeal("Abendessen", "18:30-20:30", hasUsaDinner ? "Diner / BBQ im Ramstein-Umfeld" : "Restaurant am Zielort", dinnerStop, "erst nach Ankunft und Hotel-Check-in", 95, dinnerQuery)
   ];
 }
 
@@ -739,6 +858,25 @@ function placeStory(name, kind, note) {
     pontarlier: "Pontarlier ist ein sinnvoller Jura-Stopp, weil danach die letzte Etappe Richtung Schweiz konzentriert gefahren werden kann.",
     morteau: "Morteau steht für den französischen Jura: kleinere Straßen, Höhenzüge und eine gute letzte Pause vor der Heimfahrt.",
     basel: "Basel ist bewusst als direkter Zielpunkt gesetzt. Am letzten Tag wird nicht mehr über Freiburg, Colmar oder Ballon d'Alsace verlängert.",
+    trier: "Trier ist ein starker erster Abendort in Option B: römische Geschichte, Moselatmosphäre und genug Hotels/Restaurants, ohne dass die Gruppe nach der Ankunft noch weit fahren muss.",
+    "porta nigra": "Die Porta Nigra ist das schnelle, klare Trier-Signal: gut verständlich, zentral und auch bei kurzer Abendrunde ein lohnender Blickfang.",
+    luxemburg: "Luxemburg ist ein guter Übergang in den Nordbogen der Route. Der Stopp bringt Abwechslung, sollte aber eher kompakt bleiben, damit der Tag nach Lille nicht zu lang wird.",
+    bastogne: "Bastogne passt thematisch zur Reise, weil hier WWII-Geschichte und Ardennenlandschaft zusammenkommen. Als Mittagsstopp ist es stark, als langer Museumsstopp würde es den Tag sprengen.",
+    mons: "Mons liegt gut auf dem Weg nach Lille und eignet sich als kurze belgische Stadtpause, ohne die Route stark zu verlängern.",
+    tournai: "Tournai ist der letzte sinnvolle belgische Stopp vor Lille. Kurz halten, danach konzentriert in die Stadt einfahren.",
+    lille: "Lille ist in Option B das große nördliche Zwischenziel: lebendige Altstadt, viele Restaurants und ein klarer Bruch zur ländlicheren Anfahrt durch Belgien.",
+    arras: "Arras ist ein schöner erster Stopp nach Lille mit markanten Plätzen und viel Nordfrankreich-Geschichte. Wegen des langen Tages nur kurz einplanen.",
+    albert: "Albert liegt im Somme-Gebiet und passt als kurzer Erinnerungs- und Kaffeestopp auf dem Weg Richtung Normandie.",
+    amiens: "Amiens ist auf den Nordfrankreich-Etappen der beste längere Pausenort: Kathedrale, Cafés und genug Infrastruktur für eine Gruppe.",
+    verdun: "Verdun ist ein historisch schwerer, aber sinnvoller Stopp. Für diese Motorradreise reicht eine bewusste Pause, damit die Etappe nicht emotional und zeitlich zu voll wird.",
+    "sainte-menehould": "Sainte-Menehould ist ein ruhiger Argonnen-Stopp zwischen Reims und Lothringen, gut für Kaffee oder Mittag ohne Großstadtstress.",
+    toul: "Toul ist ein praktischer letzter Pausenpunkt vor Nancy und hält die Etappe ruhig auf Landstraßen.",
+    lunéville: "Lunéville bringt Schloss- und Altstadtflair auf dem Weg von Nancy ins Elsass, ohne einen großen Umweg zu erzeugen.",
+    sarrebourg: "Sarrebourg ist auf den Lothringen/Elsass-Etappen ein guter Verschnaufpunkt, bevor die Route wieder in Richtung Vogesen und Weinstraße geht.",
+    riquewihr: "Riquewihr ist einer der hübschesten Elsass-Orte, aber oft voll. Für Motorradfahrer am besten als kurzer Fotostopp statt langer Stadtbesuch.",
+    colmar: "Colmar ist in Option B der letzte französische Abendort: Altstadt, Restaurants und ein sehr kurzer Heimtag nach Basel am nächsten Morgen.",
+    breisach: "Breisach ist ein schöner Rhein-Stopp auf dem kurzen Heimweg. Er gibt dem letzten Tag noch einen Abschluss, ohne Freiburg einzubauen.",
+    kandern: "Kandern hält den letzten Abschnitt nach Basel klein und ländlich. Gut als ruhiger Übergang vom Elsass ins Markgräflerland.",
     diner: "Dieser Stopp ist für den USA-Fan gedacht: unkompliziertes Essen, amerikanischer Stil und genug Atmosphäre, ohne dass Militärbasis-Zugang nötig ist.",
     bbq: "BBQ passt besonders gut zum Ramstein-Abend, weil es den US-Bezug aufgreift und nach einem langen Fahrtag unkompliziert funktioniert.",
     burger: "Burger/Diner ist hier bewusst als einfache, gruppentaugliche Abendoption gesetzt: wenig formell, gut planbar und passend zum USA-Thema."

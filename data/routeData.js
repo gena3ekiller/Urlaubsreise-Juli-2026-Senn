@@ -355,6 +355,285 @@ const routeData = [
 
 compressRouteToNineDays();
 
+const optionBRouteData = createOptionBRoute();
+const routeOptions = [
+  {
+    id: "option-a",
+    label: "Option A",
+    name: "Ramstein, Loire und Jura",
+    headline: "Basel → Ramstein → Caen → Basel",
+    totalKm: "~2.680 km",
+    countries: 3,
+    days: routeData,
+    summary: "Aktuelle Planung mit Ramstein am ersten Abend, D-Day-Runde, Loire/Burgund/Jura und kurzem direkten Heimtag.",
+    strengths: ["Ramstein/USA-Fokus am 1. Abend", "D-Day-Orte mit eigener Rundfahrt", "Rückreise gut verteilt ohne 500-km-Tage"]
+  },
+  {
+    id: "option-b",
+    label: "Option B",
+    name: "Trier, Lille und Elsass",
+    headline: "Basel → Trier → Lille → Caen → Basel",
+    totalKm: "~2.270 km",
+    countries: 5,
+    days: optionBRouteData,
+    summary: "Chef-Vorschlag mit Nordbogen über Trier, Belgien und Lille, danach Normandie, Reims, Nancy, Colmar und zurück nach Basel.",
+    strengths: ["Mehr Nordfrankreich/Belgien", "Sehr klare Tagesziele", "Ruhiger Schluss über Nancy und Colmar"]
+  }
+];
+
+function createOptionBRoute() {
+  return [
+    {
+      day: 1,
+      title: "Basel → Trier",
+      distance: "ca. 360 km",
+      countries: ["Schweiz", "Frankreich", "Deutschland"],
+      curveFactor: 4,
+      description: "Chef-Variante mit langem Auftakt über Nordelsass, Pfälzerwald/Saarland und Moselraum bis Trier. Keine Autobahnplanung, aber als erster Tag bewusst früh starten.",
+      focus: "Elsass, Nordvogesen, Saarland, Trier",
+      riderNotes: [
+        "Langer Auftakt: früh losfahren und Pausen nicht erst am Nachmittag suchen.",
+        "Saverne oder Bitche funktionieren gut als längere Pause vor dem Saarland.",
+        "Trier bietet abends viel zu Fuß, deshalb lohnt ein zentral gelegenes Hotel mit Parklösung."
+      ],
+      highlights: ["Saverne", "Bitche", "Saarburg", "Porta Nigra", "Trier"],
+      stops: [
+        stop("Basel", "Basel, Schweiz", 47.5596, 7.5886),
+        stop("Saverne", "Saverne, Frankreich", 48.7417, 7.3622),
+        stop("Bitche", "Bitche, Frankreich", 49.0527, 7.4268),
+        stop("Saarburg", "Saarburg, Deutschland", 49.6080, 6.5520),
+        stop("Trier", "Trier, Deutschland", 49.7499, 6.6371)
+      ],
+      hotels: [
+        hotel("Park Plaza Trier", "Trier Zentrum", "Nikolaus-Koch-Platz 1, Trier", 49.7560, 6.6412, "Parkhaus/Hotelgarage vorab prüfen.", "Sehr zentral für Porta Nigra und Abendessen.", "Innenstadtpreise und Parkhöhe beachten."),
+        hotel("Best Western Hotel Trier City", "Trier City", "Kaiserstraße 29, Trier", 49.7515, 6.6393, "Parkgarage/öffentliche Parkplätze direkt prüfen.", "Gute Lage und einfache Orientierung.", "Funktionaler als romantisch."),
+        hotel("Vienna House Easy by Wyndham Trier", "Südlich Zentrum", "Metzer Allee 6, Trier", 49.7452, 6.6436, "Parken am Hotel prüfen.", "Etwas einfacher anzufahren als die Kernaltstadt.", "Zur Altstadt ein kurzer Weg.")
+      ]
+    },
+    {
+      day: 2,
+      title: "Trier → Lille",
+      distance: "ca. 360 km",
+      countries: ["Deutschland", "Luxemburg", "Belgien", "Frankreich"],
+      curveFactor: 3,
+      description: "Nordwestlicher Verbindungstag über Luxemburg, Ardennen, Bastogne, Mons und Tournai nach Lille. Viel Geschichte und Ortsdurchfahrten, aber fahrbar, wenn die Pausen klar sitzen.",
+      focus: "Luxemburg, Ardennen, Belgien, Lille",
+      riderNotes: [
+        "Grenzen sind unkompliziert, aber Tempo- und Umweltregeln je Land im Blick behalten.",
+        "Bastogne eignet sich als thematischer Mittagsstopp für WWII-Interessierte.",
+        "Lille ist eine Großstadt: Hotel mit sicherer Parklösung vorher klären."
+      ],
+      highlights: ["Luxemburg", "Bastogne", "Mons", "Tournai", "Lille"],
+      stops: [
+        stop("Trier", "Trier, Deutschland", 49.7499, 6.6371),
+        stop("Luxemburg", "Luxemburg Stadt", 49.6116, 6.1319),
+        stop("Bastogne", "Bastogne, Belgien", 50.0035, 5.7184),
+        stop("Mons", "Mons, Belgien", 50.4542, 3.9567),
+        stop("Tournai", "Tournai, Belgien", 50.6056, 3.3880),
+        stop("Lille", "Lille, Frankreich", 50.6292, 3.0573)
+      ],
+      hotels: [
+        hotel("Best Western Premier Why Hotel", "Lille Zentrum", "7 Bis Square Morisson, Lille", 50.6330, 3.0590, "Parkhaus in der Umgebung vorab auswählen.", "Sehr zentral und praktisch für Abendessen.", "Innenstadtzufahrt kann zäh sein."),
+        hotel("OKKO Hotels Lille Centre", "Lille Zentrum", "13 Rue d'Amiens, Lille", 50.6340, 3.0627, "Nahegelegene Parkhäuser prüfen.", "Modern, zentral und unkompliziert.", "Kein klassisches Motorrad-Hotel."),
+        hotel("Couvent des Minimes Alliance Lille", "Altstadtnah", "17 Quai du Wault, Lille", 50.6386, 3.0527, "Garage/Parkoption vorher bestätigen.", "Besonderes Gebäude und schöne Lage.", "Preisniveau oft höher.")
+      ]
+    },
+    {
+      day: 3,
+      title: "Lille → Caen",
+      distance: "ca. 380 km",
+      countries: ["Frankreich"],
+      curveFactor: 3,
+      description: "Langer Verbindungstag von Lille über Arras, Albert, Amiens und Rouen nach Caen. Das ist der einzige Tag über der bisherigen Schmerzgrenze; dafür bleiben die Folgetage deutlich ruhiger.",
+      focus: "Nordfrankreich, Somme, Rouen, Caen",
+      note: "Dieser Chef-Vorschlag liegt realistisch bei rund 380-390 km. Für ältere Fahrer nur mit frühem Start und kurzen Stopps sinnvoll.",
+      riderNotes: [
+        "Früh starten und Arras/Albert eher als kurze Kaffee- oder Fotostopps behandeln.",
+        "Amiens ist die beste längere Mittagspause.",
+        "Wenn die Gruppe müde ist, Rouen als Not-Zwischenziel nehmen und Option B um einen Tag entzerren."
+      ],
+      highlights: ["Arras", "Albert", "Amiens", "Rouen", "Caen"],
+      stops: [
+        stop("Lille", "Lille, Frankreich", 50.6292, 3.0573),
+        stop("Arras", "Arras, Frankreich", 50.2910, 2.7770),
+        stop("Albert", "Albert, Somme", 50.0006, 2.6520),
+        stop("Amiens", "Amiens, Frankreich", 49.8941, 2.2958),
+        stop("Rouen", "Rouen, Frankreich", 49.4432, 1.0993),
+        stop("Caen", "Caen, Frankreich", 49.1829, -0.3707)
+      ],
+      hotels: [
+        hotel("Best Western Plus Le Moderne", "Zentrum Caen", "116 Boulevard Marechal Leclerc, Caen", 49.1838, -0.3652, "Parkhaus in der Nähe prüfen.", "Sehr zentral.", "Einbahnstraßen beachten."),
+        hotel("Hotel des Quatrans", "Altstadtrand", "17 Rue Gemare, Caen", 49.1854, -0.3658, "Parkmöglichkeiten vorher klären.", "Gute Lage für zwei Nächte.", "Nicht jeder Parkplatz ist motorradideal."),
+        hotel("Novotel Caen Côte de Nacre", "Nördlich Caen", "155 Rue de la Delivrande, Caen", 49.2023, -0.3584, "Parken am Hotel meist einfacher.", "Praktisch Richtung Küste.", "Nicht mitten in der Altstadt.")
+      ]
+    },
+    {
+      day: 4,
+      title: "Normandie / Omaha Beach Runde",
+      distance: "ca. 150 km",
+      countries: ["Frankreich"],
+      curveFactor: 2,
+      description: "Tagesausflug ab Caen zu Pegasus Bridge, Arromanches, Normandy American Cemetery, Omaha Beach und Pointe du Hoc. Inhaltlich der wichtigste US-Gedenktag der Reise.",
+      focus: "Omaha Beach, US-Friedhof, D-Day",
+      riderNotes: [
+        "Respektvolle, ruhige Tagesplanung: weniger Kilometer, mehr Zeit an den Gedenkstätten.",
+        "Normandy American Cemetery und Omaha Beach nicht hetzen.",
+        "Bei Wind und Regen an der Küste besonders defensiv fahren."
+      ],
+      highlights: ["Pegasus Bridge", "Arromanches", "Normandy American Cemetery", "Omaha Beach", "Pointe du Hoc"],
+      stops: [
+        stop("Caen", "Caen, Frankreich", 49.1829, -0.3707),
+        stop("Pegasus Bridge", "Pegasus Bridge, Bénouville", 49.2420, -0.2747),
+        stop("Arromanches-les-Bains", "Arromanches-les-Bains", 49.3402, -0.6212),
+        stop("Normandy American Cemetery", "Colleville-sur-Mer", 49.3594, -0.8552),
+        stop("Omaha Beach", "Omaha Beach", 49.3677, -0.8804),
+        stop("Pointe du Hoc", "Pointe du Hoc", 49.3946, -0.9899),
+        stop("Caen", "Caen, Frankreich", 49.1829, -0.3707)
+      ],
+      hotels: [
+        hotel("Best Western Royal Hotel Caen", "Zentrum", "1 Place de la Republique, Caen", 49.1816, -0.3655, "Parkhaus nahe Place de la Republique prüfen.", "Gut für zweite Nacht.", "Zentrumslogistik."),
+        hotel("Ibis Styles Caen Centre Gare", "Bahnhof", "52 Quai Amiral Hamelin, Caen", 49.1764, -0.3487, "Parkhaus/öffentliche Parkplätze prüfen.", "Leicht zu erreichen.", "Weniger historisch."),
+        hotel("Hotel Bristol Caen", "Bahnhofsnah", "31 Rue du 11 Novembre, Caen", 49.1772, -0.3579, "Sichere Parkoption anfragen.", "Solide und praktisch.", "Einfacher Standard.")
+      ]
+    },
+    {
+      day: 5,
+      title: "Caen → Rouen",
+      distance: "ca. 145 km",
+      countries: ["Frankreich"],
+      curveFactor: 3,
+      description: "Kurzer Normandie-Tag nach dem D-Day-Ausflug: Caen, Honfleur, Pont-Audemer und Rouen. Viel Zeit für Küste, Hafen und Altstadt.",
+      focus: "Honfleur, Seine, Rouen",
+      riderNotes: [
+        "Bewusst kurz: ideal zum Ausschlafen nach dem intensiven Gedenkstätten-Tag.",
+        "Honfleur kann voll sein; Motorräder früh und geordnet parken.",
+        "Rouen am Nachmittag/Abend zu Fuß genießen."
+      ],
+      highlights: ["Honfleur", "Pont-Audemer", "Rouen Altstadt"],
+      stops: [
+        stop("Caen", "Caen, Frankreich", 49.1829, -0.3707),
+        stop("Honfleur", "Honfleur, Frankreich", 49.4199, 0.2329),
+        stop("Pont-Audemer", "Pont-Audemer, Frankreich", 49.3551, 0.5145),
+        stop("Rouen", "Rouen, Frankreich", 49.4432, 1.0993)
+      ],
+      hotels: [
+        hotel("Radisson Blu Hotel Rouen Centre", "Nähe Altstadt", "6-8 Rue du Donjon, Rouen", 49.4475, 1.0952, "Parkhausoption vorab reservieren.", "Modern und gut gelegen.", "Innenstadtverkehr beachten."),
+        hotel("Mercure Rouen Centre Cathedrale", "Altstadt", "7 Rue Croix de Fer, Rouen", 49.4416, 1.0955, "Zentrumsparkhaus prüfen.", "Perfekt für Rouen zu Fuß.", "Enge Zufahrt."),
+        hotel("Ibis Rouen Centre Rive Droite Pasteur", "Seinenah", "7 Rue de la Pie, Rouen", 49.4445, 1.0837, "Einfachere Anfahrt als Kernaltstadt.", "Praktisch und solide.", "Funktionaler Stil.")
+      ]
+    },
+    {
+      day: 6,
+      title: "Rouen → Reims",
+      distance: "ca. 330 km",
+      countries: ["Frankreich"],
+      curveFactor: 3,
+      description: "Nordöstlicher Bogen über Lyons-la-Forêt, Amiens und Laon nach Reims. Paris wird klar vermieden.",
+      focus: "Amiens, Laon, Champagne",
+      riderNotes: [
+        "Amiens als feste Mittagspause setzen.",
+        "Laon ist ein guter letzter Kulturstopp vor Reims.",
+        "Nicht südlich Richtung Paris routen lassen."
+      ],
+      highlights: ["Lyons-la-Forêt", "Amiens", "Laon", "Reims"],
+      stops: [
+        stop("Rouen", "Rouen, Frankreich", 49.4432, 1.0993),
+        stop("Lyons-la-Forêt", "Lyons-la-Forêt, Frankreich", 49.3985, 1.4773),
+        stop("Amiens", "Amiens, Frankreich", 49.8941, 2.2958),
+        stop("Laon", "Laon, Frankreich", 49.5641, 3.6249),
+        stop("Reims", "Reims, Frankreich", 49.2583, 4.0317)
+      ],
+      hotels: [
+        hotel("Best Western Premier Hotel de la Paix", "Zentrum Reims", "9 Rue Buirette, Reims", 49.2557, 4.0274, "Gesicherte Parkoption vorab bestätigen.", "Sehr zentral für den Abend.", "Innenstadtzufahrt kostet etwas Geduld."),
+        hotel("Akena City Reims Bezannes", "Südwestlich Reims", "Rue Alfred Kastler, Bezannes", 49.2235, 3.9884, "Außenparkplätze meist unkompliziert.", "Einfacher Start am nächsten Morgen.", "Abends weniger charmant."),
+        hotel("Novotel Suites Reims Centre", "Bahnhofsnah", "1 Rue Edouard Mignot, Reims", 49.2630, 4.0241, "Parken in Bahnhofsnähe prüfen.", "Guter Komfort und einfache Orientierung.", "Bahnhofsumfeld statt Altstadtgefühl.")
+      ]
+    },
+    {
+      day: 7,
+      title: "Reims → Nancy",
+      distance: "ca. 235 km",
+      countries: ["Frankreich"],
+      curveFactor: 3,
+      description: "Ruhige Rückreiseetappe von der Champagne über Argonnen, Verdun und Toul nach Nancy.",
+      focus: "Argonnen, Verdun, Toul, Nancy",
+      riderNotes: [
+        "Verdun ist ein sinnvoller Geschichtsstopp, aber emotional und zeitlich nicht überladen.",
+        "Toul eignet sich gut für Kaffee vor dem Ziel.",
+        "Nancy am Abend mit Place Stanislas einplanen."
+      ],
+      highlights: ["Sainte-Menehould", "Verdun", "Toul", "Place Stanislas"],
+      stops: [
+        stop("Reims", "Reims, Frankreich", 49.2583, 4.0317),
+        stop("Sainte-Menehould", "Sainte-Menehould, Frankreich", 49.0902, 4.8970),
+        stop("Verdun", "Verdun, Frankreich", 49.1598, 5.3828),
+        stop("Toul", "Toul, Frankreich", 48.6759, 5.8911),
+        stop("Nancy", "Nancy, Frankreich", 48.6921, 6.1844)
+      ],
+      hotels: [
+        hotel("Hotel des Prélats", "Zentrum Nancy", "56 Place Monseigneur Ruch, Nancy", 48.6939, 6.1850, "Innenstadtparkhaus/Hoteloption prüfen.", "Sehr nah an Place Stanislas.", "Altstadtzufahrt."),
+        hotel("Best Western Plus Crystal Nancy", "Zentrum", "5 Rue Chanzy, Nancy", 48.6897, 6.1818, "Garage/Partnerparkplatz reservieren.", "Komfortabel und zentral.", "Parklösung klären."),
+        hotel("Novotel Suites Nancy Centre", "Kanalnähe", "2 Allée du Chanoine Drioton, Nancy", 48.6951, 6.1990, "Parken in Umgebung prüfen.", "Einfache Anfahrt.", "Etwas außerhalb.")
+      ]
+    },
+    {
+      day: 8,
+      title: "Nancy → Colmar",
+      distance: "ca. 225 km",
+      countries: ["Frankreich"],
+      curveFactor: 4,
+      description: "Von Lothringen zurück ins Elsass: Lunéville, Sarrebourg, Saverne, Riquewihr und Colmar. Eine schöne, überschaubare Etappe.",
+      focus: "Lothringen, Nordvogesen, Elsass",
+      riderNotes: [
+        "Sarrebourg oder Saverne als ruhige Mittagspause nutzen.",
+        "Riquewihr ist schön, aber touristisch; nur kurz halten, wenn viel los ist.",
+        "Colmar bietet einen entspannten letzten französischen Abend."
+      ],
+      highlights: ["Lunéville", "Sarrebourg", "Saverne", "Riquewihr", "Colmar"],
+      stops: [
+        stop("Nancy", "Nancy, Frankreich", 48.6921, 6.1844),
+        stop("Lunéville", "Lunéville, Frankreich", 48.5925, 6.4937),
+        stop("Sarrebourg", "Sarrebourg, Frankreich", 48.7356, 7.0546),
+        stop("Saverne", "Saverne, Frankreich", 48.7417, 7.3622),
+        stop("Riquewihr", "Riquewihr, Elsass", 48.1663, 7.2970),
+        stop("Colmar", "Colmar, Frankreich", 48.0794, 7.3585)
+      ],
+      hotels: [
+        hotel("James Boutique Hotel", "Colmar Zentrum", "15 Rue Saint-Eloi, Colmar", 48.0812, 7.3632, "Parken vor Buchung bestätigen.", "Modern und gut gelegen.", "Innenstadtpreise."),
+        hotel("Hotel Turenne", "Altstadtnah", "10 Route de Bâle, Colmar", 48.0727, 7.3608, "Parkgarage/Plätze prüfen.", "Praktische Lage.", "Kann stark nachgefragt sein."),
+        hotel("Ibis Styles Colmar Centre", "Zentrum", "11 Boulevard du Champ de Mars, Colmar", 48.0757, 7.3559, "Parkhaus in Nähe prüfen.", "Gut für Stadtbummel.", "Zentrumszufahrt.")
+      ]
+    },
+    {
+      day: 9,
+      title: "Colmar → Basel",
+      distance: "ca. 100 km",
+      countries: ["Frankreich", "Deutschland", "Schweiz"],
+      curveFactor: 3,
+      description: "Kurzer Heimtag von Colmar über Neuf-Brisach, Breisach und Markgräflerland nach Basel. Ohne Freiburg-Schlenker, damit der Abschluss entspannt bleibt.",
+      focus: "Colmar, Rhein, direkter Heimweg",
+      riderNotes: [
+        "Bewusst kurz: spätes Frühstück in Colmar ist realistisch.",
+        "Breisach oder Neuf-Brisach als letzter Fotostopp.",
+        "Bei Müdigkeit kann auch ganz direkt nach Basel abgekürzt werden."
+      ],
+      highlights: ["Neuf-Brisach", "Breisach", "Markgräflerland", "Basel"],
+      stops: [
+        stop("Colmar", "Colmar, Frankreich", 48.0794, 7.3585),
+        stop("Neuf-Brisach", "Neuf-Brisach, Elsass", 48.0170, 7.5270),
+        stop("Breisach am Rhein", "Breisach am Rhein, Deutschland", 48.0328, 7.5829),
+        stop("Kandern", "Kandern, Deutschland", 47.7138, 7.6607),
+        stop("Basel", "Basel, Schweiz", 47.5596, 7.5886)
+      ],
+      hotels: [
+        hotel("Hotel Spalentor", "Basel Altstadtrand", "Schönbeinstrasse 1, Basel", 47.5588, 7.5818, "Parkgarage/Hotelplätze vorher prüfen.", "Guter Abschluss nah der Altstadt.", "Schweizer Preisniveau."),
+        hotel("Motel One Basel", "Innenstadt", "Barfüssergasse 16, Basel", 47.5555, 7.5909, "Parkhaus in der Umgebung einplanen.", "Sehr zentral.", "Parkdistanz mit Gepäck prüfen."),
+        hotel("Essential by Dorint Basel City", "Basel Messe", "Schönaustrasse 10, Basel", 47.5668, 7.5997, "Tiefgarage/Hotelparkplatz prüfen.", "Einfachere Anfahrt als Altstadt.", "Nicht direkt am Rhein.")
+      ]
+    }
+  ];
+}
+
 function compressRouteToNineDays() {
   const original = [...routeData];
   const byDay = new Map(original.map((day) => [day.day, day]));

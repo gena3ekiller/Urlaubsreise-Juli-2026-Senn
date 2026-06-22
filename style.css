@@ -188,6 +188,49 @@ h4 {
   font-size: 0.78rem;
 }
 
+.route-options {
+  display: grid;
+  gap: 8px;
+  padding: 0 18px;
+}
+
+.route-option-chip {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  padding: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.route-option-chip:hover,
+.route-option-chip:focus-visible,
+.route-option-chip.active {
+  border-color: rgba(84, 214, 255, 0.62);
+  background: rgba(84, 214, 255, 0.12);
+}
+
+.route-option-chip span {
+  color: var(--accent-2);
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.route-option-chip strong {
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.route-option-chip small {
+  color: var(--muted);
+  line-height: 1.25;
+}
+
 .day-list {
   display: grid;
   gap: 10px;
@@ -411,6 +454,157 @@ body.map-collapsed .map-panel {
   background:
     linear-gradient(135deg, rgba(255, 184, 77, 0.16), rgba(84, 214, 255, 0.08)),
     rgba(255, 255, 255, 0.07);
+}
+
+.route-choice-hero {
+  display: grid;
+  gap: 16px;
+}
+
+.route-choice-hero h2 {
+  max-width: 900px;
+}
+
+.route-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.route-choice-card {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(84, 214, 255, 0.08), rgba(255, 184, 77, 0.06)),
+    rgba(255, 255, 255, 0.07);
+  padding: 18px;
+}
+
+.route-choice-card.active {
+  border-color: rgba(255, 184, 77, 0.58);
+}
+
+.route-choice-head,
+.route-choice-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.route-choice-head span,
+.route-choice-card button {
+  border: 1px solid rgba(84, 214, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(84, 214, 255, 0.12);
+  color: var(--accent-2);
+  padding: 8px 11px;
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.route-choice-head strong {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.route-choice-card h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  line-height: 1.08;
+}
+
+.route-choice-card p {
+  color: var(--soft);
+  line-height: 1.45;
+}
+
+.route-choice-stats {
+  justify-content: stretch;
+}
+
+.route-choice-stats div {
+  min-width: 120px;
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+}
+
+.route-choice-stats dt {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+}
+
+.route-choice-stats dd {
+  margin: 3px 0 0;
+  color: var(--text);
+  font-weight: 950;
+}
+
+.route-warning {
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: rgba(255, 184, 77, 0.11);
+  padding: 10px 12px;
+}
+
+.route-choice-days {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-choice-days li {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+}
+
+.route-choice-days span {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 950;
+}
+
+.route-choice-days strong,
+.route-choice-days small {
+  overflow-wrap: anywhere;
+}
+
+.route-choice-days small {
+  color: var(--muted);
+  line-height: 1.3;
+}
+
+.route-choice-strengths {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--soft);
+}
+
+.route-choice-card button {
+  justify-self: start;
+  min-height: 44px;
+  border-color: rgba(255, 184, 77, 0.58);
+  background: rgba(255, 184, 77, 0.18);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .detail-heading {
@@ -829,8 +1023,13 @@ body.map-collapsed .map-panel {
   }
 
   .search-wrap,
-  .trip-summary {
+  .trip-summary,
+  .route-options {
     padding-inline: 14px;
+  }
+
+  .route-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .day-list {
@@ -874,7 +1073,8 @@ body.map-collapsed .map-panel {
   .detail-heading,
   .quick-grid,
   .meal-grid,
-  .detail-grid {
+  .detail-grid,
+  .route-choice-grid {
     grid-template-columns: 1fr;
   }
 
@@ -911,6 +1111,14 @@ body.map-collapsed .map-panel {
 
   .trip-summary div {
     padding: 10px 8px;
+  }
+
+  .route-options {
+    grid-template-columns: 1fr;
+  }
+
+  .route-choice-card {
+    padding: 14px;
   }
 
   .detail-card {
