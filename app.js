@@ -624,9 +624,8 @@ function attractionCard(attraction) {
 
 
 
-let googlePlacesPromise;
-let PlaceClass;
 const placePhotoCache = new Map();
+const PLACES_TEXT_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText";
 
 function hydratePlacePhotos() {
   const cards = [...document.querySelectorAll(".place-photo-card")];
@@ -639,42 +638,7 @@ function hydratePlacePhotos() {
     return;
   }
 
-  loadGooglePlaces().then(() => {
-    cards.forEach(loadPlaceCard);
-  }).catch((error) => {
-    cards.forEach((card) => {
-      renderPlaceEmpty(card, "Google Places", readablePlaceStatus(error));
-    });
-  });
-}
-
-function loadGooglePlaces() {
-  if (googlePlacesPromise) return googlePlacesPromise;
-  googlePlacesPromise = new Promise((resolve, reject) => {
-    const finish = async () => {
-      try {
-        const library = await google.maps.importLibrary("places");
-        PlaceClass = library.Place;
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    if (window.google?.maps?.importLibrary) {
-      finish();
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(window.GOOGLE_MAPS_API_KEY)}&v=weekly&loading=async&language=de&region=DE`;
-    script.async = true;
-    script.defer = true;
-    script.onload = finish;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
-  return googlePlacesPromise;
+  cards.forEach(loadPlaceCard);
 }
 
 async function loadPlaceCard(card) {
@@ -682,7 +646,7 @@ async function loadPlaceCard(card) {
   const lat = Number(card.dataset.placeLat);
   const lng = Number(card.dataset.placeLng);
   const kind = card.dataset.placeKind || "place";
-  if (!query || !PlaceClass) return;
+  if (!query) return;
 
   const cacheKey = `${kind}|${query}|${lat}|${lng}`;
   if (placePhotoCache.has(cacheKey)) {
@@ -691,7 +655,7 @@ async function loadPlaceCard(card) {
   }
 
   try {
-    const place = await searchPlaceNewApi({ query, lat, lng, kind });
+    const place = await searchPlaceRestApi({ query, lat, lng, kind });
     if (!place) {
       renderPlaceEmpty(card, "Kein Google-Treffer", "Maps-Link nutzen");
       return;
@@ -703,24 +667,41 @@ async function loadPlaceCard(card) {
   }
 }
 
-async function searchPlaceNewApi({ query, lat, lng, kind }) {
+async function searchPlaceRestApi({ query, lat, lng, kind }) {
   const includedType = kind === "hotel" ? "lodging" : kind === "restaurant" ? "restaurant" : "tourist_attraction";
-  const request = {
+  const body = {
     textQuery: query,
-    fields: ["displayName", "photos", "rating", "userRatingCount", "priceLevel", "googleMapsURI", "location"],
     includedType,
     useStrictTypeFiltering: false,
-    language: "de-DE",
-    region: "de",
+    languageCode: "de",
+    regionCode: "DE",
     maxResultCount: 5
   };
 
   if (Number.isFinite(lat) && Number.isFinite(lng)) {
-    request.locationBias = new google.maps.LatLng(lat, lng);
+    body.locationBias = {
+      circle: {
+        center: { latitude: lat, longitude: lng },
+        radius: kind === "hotel" ? 700 : kind === "restaurant" ? 2200 : 4200
+      }
+    };
   }
 
-  const { places } = await PlaceClass.searchByText(request);
-  return pickPhotoPlace(places || []);
+  const response = await fetch(PLACES_TEXT_SEARCH_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": window.GOOGLE_MAPS_API_KEY,
+      "X-Goog-FieldMask": "places.displayName,places.photos.name,places.rating,places.userRatingCount,places.priceLevel,places.googleMapsUri,places.location"
+    },
+    body: JSON.stringify(body)
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || payload.error) {
+    throw new Error(payload.error?.message || `Places HTTP ${response.status}`);
+  }
+  return pickPhotoPlace(payload.places || []);
 }
 
 function pickPhotoPlace(results) {
@@ -728,13 +709,8 @@ function pickPhotoPlace(results) {
 }
 
 function renderPlaceResult(card, place, fallbackName, kind) {
-  const photos = (place.photos || []).slice(0, 6).map((photo) => {
-    if (typeof photo.getURI === "function") return photo.getURI({ maxWidth: 920, maxHeight: 560 });
-    if (typeof photo.getUrl === "function") return photo.getUrl({ maxWidth: 920, maxHeight: 560 });
-    return "";
-  }).filter(Boolean);
-
-  const name = place.displayName || fallbackName;
+  const photos = (place.photos || []).slice(0, 6).map((photo) => photo.name ? googlePhotoUrl(photo.name) : "").filter(Boolean);
+  const name = place.displayName?.text || place.displayName || fallbackName;
   const rating = place.rating ? `${Number(place.rating).toFixed(1)} Sterne` : "Bewertung live prüfen";
   const count = place.userRatingCount ? `${place.userRatingCount} Bewertungen` : "";
   const price = place.priceLevel ? formatGooglePrice(place.priceLevel) : "Preis live prüfen";
@@ -754,7 +730,7 @@ function renderPlaceResult(card, place, fallbackName, kind) {
   const slidesId = `slides-${Math.random().toString(36).slice(2)}`;
   card.innerHTML = `
     <div class="photo-carousel" id="${slidesId}" tabindex="0" aria-label="Google Fotos ${escapeHtml(name)}">
-      ${photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(name)} Foto ${index + 1}" loading="lazy" />`).join("")}
+      ${photos.map((src, index) => `<img src="${src}" alt="${escapeHtml(name)} Foto ${index + 1}" loading="lazy" referrerpolicy="no-referrer" />`).join("")}
     </div>
     ${photos.length > 1 ? `
       <button class="photo-nav photo-prev" type="button" aria-label="Vorheriges Foto">‹</button>
@@ -768,6 +744,15 @@ function renderPlaceResult(card, place, fallbackName, kind) {
   `;
   card.querySelector(".photo-prev")?.addEventListener("click", () => scrollPhotoCarousel(card, -1));
   card.querySelector(".photo-next")?.addEventListener("click", () => scrollPhotoCarousel(card, 1));
+}
+
+function googlePhotoUrl(photoName) {
+  const params = new URLSearchParams({
+    maxWidthPx: "920",
+    maxHeightPx: "560",
+    key: window.GOOGLE_MAPS_API_KEY
+  });
+  return `https://places.googleapis.com/v1/${photoName}/media?${params.toString()}`;
 }
 
 function formatGooglePrice(priceLevel) {
@@ -794,11 +779,12 @@ function renderPlaceEmpty(card, title, detail) {
 
 function readablePlaceStatus(error) {
   const text = typeof error === "string" ? error : error?.message || String(error || "");
-  if (text.includes("REQUEST_DENIED")) return "Places API (New) aktivieren";
+  if (text.includes("REQUEST_DENIED")) return "API-Key/Referrer prüfen";
   if (text.includes("RefererNotAllowed") || text.includes("referer")) return "Referrer prüfen";
   if (text.includes("ApiNotActivated") || text.includes("not enabled")) return "Places API (New) aktivieren";
   if (text.includes("OVER_QUERY_LIMIT")) return "Limit erreicht";
   if (text.includes("billing")) return "Billing aktivieren";
+  if (text.includes("Failed to fetch") || text.includes("Load failed")) return "Browser blockiert API/CORS";
   return text ? text.replace(/_/g, " ").slice(0, 80) : "bitte API prüfen";
 }
 
