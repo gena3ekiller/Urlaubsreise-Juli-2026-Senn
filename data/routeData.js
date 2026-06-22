@@ -33,20 +33,42 @@ const routeData = [
   },
   {
     day: 2,
-    title: "Ramstein/Landstuhl → Reims",
-    distance: "ca. 310 km",
+    title: "Ramstein/Landstuhl → Nancy",
+    distance: "ca. 205 km",
     countries: ["Deutschland", "Frankreich"],
     curveFactor: 4,
-    description: "Von der Pfalz über Saarlouis und kleine Grenzorte nach Verdun, dann durch die Argonnen nach Reims.",
-    focus: "Grenzorte, Verdun, Champagne",
-    riderNotes: ["Viele kleine Grenzstraßen, mit Tempolimits und Ortschaften rechnen.", "Verdun eignet sich für eine längere Pause.", "Metz wird bewusst ausgelassen, damit der Tag unter Kontrolle bleibt."],
-    highlights: ["Saarlouis", "Bouzonville", "Verdun", "Sainte-Menehould", "Reims"],
+    description: "Nach dem Ramstein-Abend weiter über Pfälzerwald, Nordvogesen und Lothringen nach Nancy. Damit liegt Nancy früh in der Reise und nicht mehr kurz vor Schluss.",
+    focus: "Nordvogesen, Lothringen, Nancy früh in der Route",
+    riderNotes: ["Autobahn vermeiden und bewusst über kleine Grenzorte routen.", "Bitche und Sarrebourg sind gute Pausenorte.", "Nancy ist ein angenehmer Kulturstopp nach dem Ramstein-Tag."],
+    highlights: ["Landstuhl", "Bitche", "Sarrebourg", "Lunéville", "Place Stanislas"],
     stops: [
       stop("Ramstein-Miesenbach", "Ramstein-Miesenbach", 49.4450, 7.5550),
       stop("Landstuhl", "Landstuhl", 49.4131, 7.5702),
-      stop("Saarlouis", "Saarlouis, Deutschland", 49.3137, 6.7515),
-      stop("Bouzonville", "Bouzonville, Frankreich", 49.2915, 6.5330),
-      stop("Verdun", "Verdun, Frankreich", 49.1593, 5.3828),
+      stop("Bitche", "Bitche, Frankreich", 49.0527, 7.4268),
+      stop("Sarrebourg", "Sarrebourg, Frankreich", 48.7356, 7.0546),
+      stop("Lunéville", "Lunéville, Frankreich", 48.5925, 6.4937),
+      stop("Nancy", "Nancy, Frankreich", 48.6921, 6.1844)
+    ],
+    hotels: [
+      hotel("Hotel des Prélats", "Zentrum Nancy", "56 Place Monseigneur Ruch, Nancy", 48.6939, 6.1850, "Innenstadtparkhaus/Hoteloption prüfen.", "Sehr nah an Place Stanislas.", "Altstadtzufahrt."),
+      hotel("Best Western Plus Crystal Nancy", "Zentrum", "5 Rue Chanzy, Nancy", 48.6897, 6.1818, "Garage/Partnerparkplatz reservieren.", "Komfortabel und zentral.", "Parklösung klären."),
+      hotel("Novotel Suites Nancy Centre", "Kanalnähe", "2 Allée du Chanoine Drioton, Nancy", 48.6951, 6.1990, "Parken in Umgebung prüfen.", "Einfache Anfahrt.", "Etwas außerhalb.")
+    ]
+  },
+  {
+    day: 3,
+    title: "Nancy → Reims",
+    distance: "ca. 220 km",
+    countries: ["Frankreich"],
+    curveFactor: 3,
+    description: "Von Nancy über Toul, Bar-le-Duc und die Argonnen nach Reims. Ruhige D-Straßen, viel Geschichte und keine Paris-Nähe.",
+    focus: "Lothringen, Argonnen, Champagne",
+    riderNotes: ["Viele Ortsdurchfahrten: lieber gleichmäßig fahren als hetzen.", "Toul oder Bar-le-Duc sind passende Frühstücks-/Kaffeepausen.", "Sainte-Menehould als entspannter Mittagspunkt vor Reims nutzen."],
+    highlights: ["Toul", "Bar-le-Duc", "Sainte-Menehould", "Reims"],
+    stops: [
+      stop("Nancy", "Nancy, Frankreich", 48.6921, 6.1844),
+      stop("Toul", "Toul, Frankreich", 48.6759, 5.8911),
+      stop("Bar-le-Duc", "Bar-le-Duc, Frankreich", 48.7728, 5.1619),
       stop("Sainte-Menehould", "Sainte-Menehould, Frankreich", 49.0907, 4.8974),
       stop("Reims", "Reims, Frankreich", 49.2583, 4.0317)
     ],
@@ -57,7 +79,7 @@ const routeData = [
     ]
   },
   {
-    day: 3,
+    day: 4,
     title: "Reims → Rouen",
     distance: "ca. 310 km",
     countries: ["Frankreich"],
@@ -81,7 +103,7 @@ const routeData = [
     ]
   },
   {
-    day: 4,
+    day: 5,
     title: "Rouen → Caen",
     distance: "ca. 235 km",
     countries: ["Frankreich"],
@@ -106,7 +128,7 @@ const routeData = [
     ]
   },
   {
-    day: 5,
+    day: 6,
     title: "Caen D-Day Runde",
     distance: "ca. 150 km",
     countries: ["Frankreich"],
@@ -131,7 +153,7 @@ const routeData = [
     ]
   },
   {
-    day: 6,
+    day: 7,
     title: "Caen → Le Mans",
     distance: "ca. 260 km",
     countries: ["Frankreich"],
@@ -155,7 +177,7 @@ const routeData = [
     ]
   },
   {
-    day: 7,
+    day: 8,
     title: "Le Mans → Tours/Loire",
     distance: "ca. 185 km",
     countries: ["Frankreich"],
@@ -179,7 +201,7 @@ const routeData = [
     ]
   },
   {
-    day: 8,
+    day: 9,
     title: "Tours → Nevers",
     distance: "ca. 265 km",
     countries: ["Frankreich"],
@@ -202,7 +224,7 @@ const routeData = [
     ]
   },
   {
-    day: 9,
+    day: 10,
     title: "Nevers → Dijon",
     distance: "ca. 250 km",
     countries: ["Frankreich"],
@@ -227,7 +249,7 @@ const routeData = [
     ]
   },
   {
-    day: 10,
+    day: 11,
     title: "Dijon → Besançon",
     distance: "ca. 160 km",
     countries: ["Frankreich"],
@@ -251,7 +273,7 @@ const routeData = [
     ]
   },
   {
-    day: 11,
+    day: 12,
     title: "Besançon → Colmar",
     distance: "ca. 310 km",
     countries: ["Frankreich"],
@@ -275,45 +297,20 @@ const routeData = [
     ]
   },
   {
-    day: 12,
-    title: "Colmar → Nancy",
-    distance: "ca. 165 km",
-    countries: ["Frankreich"],
-    curveFactor: 5,
-    description: "Nordvogesen-Etappe nach Nancy: erst über Munster und Gérardmer, dann ohne unnötigen Dijon-Schlenker weiter nach Lothringen.",
-    focus: "Vogesen, Gérardmer, Nancy",
-    riderNotes: ["Col de la Schlucht wetterabhängig prüfen.", "Kurvige Vogesenstraßen mit vielen Ortsdurchfahrten, deshalb nicht zu spät starten.", "Nancy ist bewusst der nördliche Wendepunkt, danach geht es wieder Richtung Schwarzwald/Basel."],
-    highlights: ["Munster", "Col de la Schlucht", "Gérardmer", "Épinal", "Nancy"],
-    stops: [
-      stop("Colmar", "Colmar", 48.0794, 7.3585),
-      stop("Munster", "Munster, Haut-Rhin", 48.0415, 7.1338),
-      stop("Col de la Schlucht", "Col de la Schlucht", 48.0645, 7.0220),
-      stop("Gérardmer", "Gérardmer", 48.0735, 6.8787),
-      stop("Épinal", "Épinal", 48.1744, 6.4506),
-      stop("Nancy", "Nancy, Frankreich", 48.6921, 6.1844)
-    ],
-    hotels: [
-      hotel("Hotel des Prélats", "Zentrum Nancy", "56 Place Monseigneur Ruch, Nancy", 48.6939, 6.1850, "Innenstadtparkhaus/Hoteloption prüfen.", "Sehr nah an Place Stanislas.", "Altstadtzufahrt."),
-      hotel("Best Western Plus Crystal Nancy", "Zentrum", "5 Rue Chanzy, Nancy", 48.6897, 6.1818, "Garage/Partnerparkplatz reservieren.", "Komfortabel und zentral.", "Parklösung klären."),
-      hotel("Novotel Suites Nancy Centre", "Kanalnähe", "2 Allée du Chanoine Drioton, Nancy", 48.6951, 6.1990, "Parken in Umgebung prüfen.", "Einfache Anfahrt.", "Etwas außerhalb.")
-    ]
-  },
-  {
     day: 13,
-    title: "Nancy → Freiburg",
-    distance: "ca. 210 km",
+    title: "Colmar → Freiburg",
+    distance: "ca. 65 km",
     countries: ["Frankreich", "Deutschland"],
-    curveFactor: 5,
-    description: "Von Nancy wieder sauber Richtung Osten und Süden: über Saint-Dié, Col de la Schlucht, Munster und den Schwarzwald nach Freiburg.",
-    focus: "Rückrichtung Basel, Vogesen, Schwarzwald",
-    riderNotes: ["Das ersetzt den alten unlogischen Nancy→Dijon-Schlenker.", "Vogesen und Schwarzwald sind kurvig, aber die Richtung stimmt jetzt wieder Richtung Basel.", "Bei Müdigkeit in Colmar oder Freiburg früher beenden."],
-    highlights: ["Saint-Dié-des-Vosges", "Col de la Schlucht", "Munster", "Freiburg"],
+    curveFactor: 4,
+    description: "Kurzer, sauberer Rückweg aus dem Elsass in den Schwarzwald. Genug Zeit für Colmar am Morgen und Freiburg am Abend.",
+    focus: "Elsass, Kaiserstuhl, Freiburg",
+    riderNotes: ["Bewusst kurz und entspannt nach den langen Etappen.", "Bei gutem Wetter über Kaiserstuhl und kleine Weinorte fahren.", "Freiburg ist ein sinnvoller letzter Übernachtungsort vor Basel."],
+    highlights: ["Colmar", "Breisach", "Kaiserstuhl", "Freiburg"],
     stops: [
-      stop("Nancy", "Nancy", 48.6921, 6.1844),
-      stop("Saint-Dié-des-Vosges", "Saint-Dié-des-Vosges", 48.2847, 6.9492),
-      stop("Col de la Schlucht", "Col de la Schlucht", 48.0645, 7.0220),
-      stop("Munster", "Munster, Haut-Rhin", 48.0415, 7.1338),
-      stop("Colmar", "Colmar", 48.0794, 7.3585),
+      stop("Colmar", "Colmar, Frankreich", 48.0794, 7.3585),
+      stop("Neuf-Brisach", "Neuf-Brisach, Elsass", 48.0170, 7.5270),
+      stop("Breisach am Rhein", "Breisach am Rhein", 48.0328, 7.5829),
+      stop("Vogtsburg im Kaiserstuhl", "Vogtsburg im Kaiserstuhl", 48.0960, 7.6410),
       stop("Freiburg", "Freiburg im Breisgau", 47.9990, 7.8421)
     ],
     hotels: [
