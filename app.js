@@ -672,7 +672,6 @@ async function searchPlaceRestApi({ query, lat, lng, kind }) {
   const body = {
     textQuery: query,
     includedType,
-    useStrictTypeFiltering: false,
     languageCode: "de",
     regionCode: "DE",
     maxResultCount: 5
