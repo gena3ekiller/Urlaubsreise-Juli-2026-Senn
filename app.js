@@ -45,6 +45,7 @@ let activeRouteOption = availableRouteOptions[0];
 let currentRouteData = activeRouteOption.days;
 let allRoutePoints = currentRouteData.flatMap((day) => getRoutePoints(day));
 let activeDay = currentRouteData[0];
+let showingRouteOverview = true;
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
 let activeRouteLayer = L.layerGroup();
@@ -123,7 +124,11 @@ function bindEvents() {
   window.addEventListener("resize", () => {
     window.setTimeout(() => {
       map.invalidateSize();
-      focusDay(activeDay, { padding: true });
+      if (showingRouteOverview) {
+        fitAll();
+      } else {
+        focusDay(activeDay, { padding: true });
+      }
     }, 140);
   });
 }
@@ -132,7 +137,7 @@ function renderRouteOptions() {
   if (!els.routeOptions) return;
   els.routeOptions.innerHTML = availableRouteOptions.map((option) => routeOptionButton(option)).join("");
   els.routeOptions.querySelectorAll("[data-route-option]").forEach((button) => {
-    button.addEventListener("click", () => selectRouteOption(button.dataset.routeOption));
+    button.addEventListener("click", () => selectRouteOption(button.dataset.routeOption, { showOverview: true }));
   });
 }
 
@@ -177,23 +182,29 @@ function updateTripSummary() {
 }
 
 function renderRouteComparison() {
+  showingRouteOverview = true;
   els.details.innerHTML = `
     <section class="route-choice-hero">
-      <p class="eyebrow">Routenvorschläge</p>
-      <h2>Welche 9-Tage-Tour soll angezeigt werden?</h2>
-      <p class="description">Beide Varianten sind als Motorradroute ohne Autobahn gedacht. Nach der Auswahl wechseln Karte, Tagesliste, Hotels, Essenspausen, Sehenswürdigkeiten und Druckansicht komplett auf die gewählte Option.</p>
+      <div class="route-choice-title">
+        <div>
+          <p class="eyebrow">Routenvorschläge</p>
+          <h2>${escapeHtml(activeRouteOption.label)} · ${escapeHtml(activeRouteOption.headline)}</h2>
+          <p class="description">Oben ist die komplette Karte der ausgewählten Variante sichtbar. Tagesdetails, Hotels, Essenspausen, Sehenswürdigkeiten, Druckansicht und GPX-Export wechseln automatisch mit.</p>
+        </div>
+        <button type="button" data-open-first-day>Tag 1 öffnen</button>
+      </div>
       <div class="route-choice-grid">
         ${availableRouteOptions.map(routeChoiceCard).join("")}
       </div>
     </section>
   `;
   els.details.querySelectorAll("[data-route-choice]").forEach((button) => {
-    button.addEventListener("click", () => selectRouteOption(button.dataset.routeChoice, { showOverview: false }));
+    button.addEventListener("click", () => selectRouteOption(button.dataset.routeChoice, { showOverview: true }));
   });
+  els.details.querySelector("[data-open-first-day]")?.addEventListener("click", () => selectDay(1));
 }
 
 function routeChoiceCard(option) {
-  const distanceWarning = option.days.find((day) => Number((day.distance.match(/\d+/) || [0])[0]) > 370);
   return `
     <article class="route-choice-card${option.id === activeRouteOption.id ? " active" : ""}">
       <div class="route-choice-head">
@@ -207,14 +218,13 @@ function routeChoiceCard(option) {
         <div><dt>Länder</dt><dd>${option.countries}</dd></div>
         <div><dt>Max. Tag</dt><dd>${escapeHtml(maxDistanceLabel(option.days))}</dd></div>
       </dl>
-      ${distanceWarning ? `<p class="route-warning">Hinweis: ${escapeHtml(distanceWarning.title)} liegt mit ${escapeHtml(distanceWarning.distance)} bewusst über 370 km.</p>` : ""}
       <ol class="route-choice-days">
         ${option.days.map((day) => `<li><span>Tag ${day.day}</span><strong>${escapeHtml(day.title)}</strong><small>${escapeHtml(day.distance)} · ${escapeHtml(day.focus)}</small></li>`).join("")}
       </ol>
       <ul class="route-choice-strengths">
         ${option.strengths.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
       </ul>
-      <button type="button" data-route-choice="${escapeHtmlAttr(option.id)}">${escapeHtml(option.label)} anzeigen</button>
+      <button type="button" data-route-choice="${escapeHtmlAttr(option.id)}">${option.id === activeRouteOption.id ? "Ausgewählt" : `${escapeHtml(option.label)} Karte anzeigen`}</button>
     </article>
   `;
 }
@@ -431,6 +441,7 @@ function renderActiveRoute(day) {
 }
 
 function renderDetails(day) {
+  showingRouteOverview = false;
   els.details.innerHTML = `
     <article class="detail-card hero-detail">
       <div class="detail-heading">

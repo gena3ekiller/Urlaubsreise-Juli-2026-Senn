@@ -461,8 +461,27 @@ body.map-collapsed .map-panel {
   gap: 16px;
 }
 
+.route-choice-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .route-choice-hero h2 {
   max-width: 900px;
+}
+
+.route-choice-title button {
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: 1px solid rgba(255, 184, 77, 0.58);
+  border-radius: 999px;
+  background: rgba(255, 184, 77, 0.18);
+  color: var(--text);
+  padding: 10px 14px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .route-choice-grid {
@@ -1071,6 +1090,7 @@ body.map-collapsed .map-panel {
   }
 
   .detail-heading,
+  .route-choice-title,
   .quick-grid,
   .meal-grid,
   .detail-grid,
@@ -1078,7 +1098,8 @@ body.map-collapsed .map-panel {
     grid-template-columns: 1fr;
   }
 
-  .detail-heading {
+  .detail-heading,
+  .route-choice-title {
     display: grid;
   }
 
