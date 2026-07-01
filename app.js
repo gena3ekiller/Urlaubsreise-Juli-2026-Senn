@@ -747,7 +747,7 @@ function renderDetails(day) {
         </div>
       </div>
       <div class="meal-grid">
-        ${mealPlan(day).map(mealCard).join("")}
+        ${mealPlan(day).map((meal) => mealCard(meal, day, sel)).join("")}
       </div>
     </section>
 
@@ -875,17 +875,22 @@ function usaSpotCard(spot, day, sel) {
   `;
 }
 
-function mealCard(meal) {
+function mealCard(meal, day, sel) {
   const story = mealStory(meal);
+  const key = `meal-${slugifyFilename(meal.label)}`;
+  const isSelected = sel.attractionKeys.includes(key);
   return `
-    <article class="meal-card">
+    <article class="meal-card${isSelected ? " is-selected" : ""}">
+      <button type="button" class="select-toggle-btn" data-select-attraction="${escapeHtmlAttr(key)}" aria-pressed="${isSelected}">
+        ${isSelected ? "✓ Ausgewählt" : "Für Route auswählen"}
+      </button>
       <div class="meal-time">
         <span>${escapeHtml(meal.label)}</span>
         <strong>${escapeHtml(meal.time)}</strong>
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-marker-key="meal-${slugifyFilename(meal.label)}" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-marker-key="${key}" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -1065,7 +1070,7 @@ function refreshSelectionUI(day) {
       btn.classList.toggle("is-selected", isSelected);
       btn.textContent = isSelected ? "✓ Ausgewählt" : "Für Route auswählen";
       btn.setAttribute("aria-pressed", String(isSelected));
-      btn.closest(".attraction-card")?.classList.toggle("is-selected", isSelected);
+      btn.closest(".attraction-card, .meal-card")?.classList.toggle("is-selected", isSelected);
     });
     focusDay(day, { padding: true });
   }
@@ -1186,7 +1191,16 @@ function selectablePlacesForDay(day) {
     links: item.links,
     order: routeProgress(day, item.lat, item.lng)
   }));
-  return [...attractions, ...usaSpots];
+  const meals = mealPlan(day).map((meal) => ({
+    key: `meal-${slugifyFilename(meal.label)}`,
+    name: meal.title,
+    address: meal.place,
+    lat: meal.lat,
+    lng: meal.lng,
+    links: { google: meal.google },
+    order: routeProgress(day, meal.lat, meal.lng)
+  }));
+  return [...attractions, ...usaSpots, ...meals];
 }
 
 // Ordnet einen Punkt entlang der tatsächlich gefahrenen Streckenlinie ein (statt nur

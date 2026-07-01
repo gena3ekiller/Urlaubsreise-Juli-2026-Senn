@@ -777,7 +777,8 @@ body.map-collapsed .map-panel {
 }
 
 .hotel-card.is-selected,
-.attraction-card.is-selected {
+.attraction-card.is-selected,
+.meal-card.is-selected {
   border-color: var(--success);
   background: rgba(89, 232, 164, 0.08);
 }
