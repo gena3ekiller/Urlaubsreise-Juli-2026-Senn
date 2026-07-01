@@ -46,6 +46,9 @@ let currentRouteData = activeRouteOption.days;
 let allRoutePoints = currentRouteData.flatMap((day) => getRoutePoints(day));
 let activeDay = currentRouteData[0];
 let showingRouteOverview = true;
+const MAX_GOOGLE_WAYPOINTS = 8;
+const SELECTION_STORAGE_KEY = "ausflug-auswahl-v1";
+let selectionState = loadSelectionState();
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
 let activeRouteLayer = L.layerGroup();
@@ -114,6 +117,34 @@ function bindEvents() {
     }
     if (event.target.closest("[data-close-place-modal]")) {
       closePlaceModal();
+    }
+  });
+
+  els.details.addEventListener("click", (event) => {
+    const hotelBtn = event.target.closest("[data-select-hotel]");
+    if (hotelBtn) {
+      handleHotelSelect(activeDay, hotelBtn.dataset.selectHotel);
+      return;
+    }
+    const attractionBtn = event.target.closest("[data-select-attraction]");
+    if (attractionBtn) {
+      handleAttractionToggle(activeDay, attractionBtn.dataset.selectAttraction);
+      return;
+    }
+    if (event.target.closest("[data-reset-day-selection]")) {
+      resetDaySelection(activeDay);
+      return;
+    }
+    if (event.target.closest("[data-download-day-gpx]")) {
+      downloadDayGpx(activeDay);
+      return;
+    }
+    if (event.target.closest("[data-download-option-gpx]")) {
+      downloadOptionGpx();
+      return;
+    }
+    if (event.target.closest("[data-focus-active-day]")) {
+      focusDay(activeDay);
     }
   });
 
@@ -442,6 +473,7 @@ function renderActiveRoute(day) {
 
 function renderDetails(day) {
   showingRouteOverview = false;
+  const sel = getDaySelection(day);
   els.details.innerHTML = `
     <article class="detail-card hero-detail">
       <div class="detail-heading">
@@ -458,13 +490,8 @@ function renderDetails(day) {
         <div><span>Fokus</span><strong>${escapeHtml(day.focus)}</strong></div>
         <div><span>Stopps</span><strong>${day.stops.length}</strong></div>
       </div>
-      <div class="route-actions">
-        <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">Google Tagesroute</a>
-        <button type="button" data-download-day-gpx>Garmin Tages-GPX</button>
-        <button type="button" data-download-option-gpx>Garmin Gesamt-GPX</button>
-        <button type="button" data-focus-active-day>Tag fokussieren</button>
-      </div>
-      <p class="gpx-note">Für Garmin-Geräte: GPX herunterladen und per USB/SD in Garmin/BaseCamp importieren. Die Datei enthält die Stopps als Route und die sichtbare Kartenlinie als Track; am Gerät zusätzlich „Autobahnen vermeiden“ aktivieren.</p>
+      <p class="how-to-text">So geht's: Bei „Hotelvorschläge" und „Sehenswürdigkeiten" weiter unten anklicken, was ihr für diesen Tag wollt. Hier oben erscheint dann automatisch eure eigene Route zum Öffnen oder Herunterladen.</p>
+      <div class="selection-bar" id="selectionBar">${renderSelectionBarInner(day)}</div>
     </article>
 
     <section class="detail-card overview-card">
@@ -484,7 +511,7 @@ function renderDetails(day) {
         </div>
       </div>
       <div class="attraction-grid">
-        ${attractionPlan(day).map(attractionCard).join("")}
+        ${attractionPlan(day).map((attraction) => attractionCard(attraction, day, sel)).join("")}
       </div>
     </section>
 
@@ -498,7 +525,7 @@ function renderDetails(day) {
         </div>
         <p class="description">Alles außerhalb der Air Base geplant: Diner, BBQ, Burger und öffentlich erreichbare Ramstein-Orte.</p>
         <div class="attraction-grid">
-          ${day.usaSpots.map(usaSpotCard).join("")}
+          ${day.usaSpots.map((spot) => usaSpotCard(spot, day, sel)).join("")}
         </div>
       </section>
     ` : ""}
@@ -523,7 +550,7 @@ function renderDetails(day) {
         </div>
       </div>
       <div class="hotel-grid">
-        ${day.hotels.map(hotelCard).join("")}
+        ${day.hotels.map((hotel) => hotelCard(hotel, day, sel)).join("")}
       </div>
     </section>
 
@@ -545,9 +572,6 @@ function renderDetails(day) {
       </div>
     </section>
   `;
-  els.details.querySelector("[data-focus-active-day]")?.addEventListener("click", () => focusDay(activeDay));
-  els.details.querySelector("[data-download-day-gpx]")?.addEventListener("click", () => downloadDayGpx(activeDay));
-  els.details.querySelector("[data-download-option-gpx]")?.addEventListener("click", () => downloadOptionGpx());
   hydratePlacePhotos();
 }
 
@@ -577,10 +601,14 @@ function stopCard(stop, index, dayNumber) {
   `;
 }
 
-function hotelCard(hotel) {
+function hotelCard(hotel, day, sel) {
   const story = hotelStory(hotel);
+  const isSelected = sel.hotelName === hotel.name;
   return `
-    <article class="hotel-card">
+    <article class="hotel-card${isSelected ? " is-selected" : ""}">
+      <button type="button" class="select-toggle-btn" data-select-hotel="${escapeHtmlAttr(hotel.name)}" aria-pressed="${isSelected}">
+        ${isSelected ? "✓ Für diese Nacht gewählt" : "Für diese Nacht wählen"}
+      </button>
       <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
@@ -611,9 +639,14 @@ function hotelCard(hotel) {
   `;
 }
 
-function usaSpotCard(spot) {
+function usaSpotCard(spot, day, sel) {
+  const key = `usa-${slugifyFilename(spot.name)}`;
+  const isSelected = sel.attractionKeys.includes(key);
   return `
-    <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(spot.name)} öffnen">
+    <article class="attraction-card place-open-card${isSelected ? " is-selected" : ""}" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(spot.name)} öffnen">
+      <button type="button" class="select-toggle-btn" data-select-attraction="${escapeHtmlAttr(key)}" aria-pressed="${isSelected}">
+        ${isSelected ? "✓ Ausgewählt" : "Für Route auswählen"}
+      </button>
       <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
@@ -749,40 +782,208 @@ function pointsNearStop(point, stop) {
   return Math.abs(Number(point[0]) - stop.lat) < 0.08 && Math.abs(Number(point[1]) - stop.lng) < 0.08;
 }
 
-function googleRouteLink(day) {
+function loadSelectionState() {
+  try {
+    const raw = localStorage.getItem(SELECTION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveSelectionState() {
+  try {
+    localStorage.setItem(SELECTION_STORAGE_KEY, JSON.stringify(selectionState));
+  } catch (error) {
+    console.warn("Auswahl konnte nicht gespeichert werden.", error);
+  }
+}
+
+function getDaySelection(day) {
+  const optionId = activeRouteOption.id;
+  if (!selectionState[optionId]) selectionState[optionId] = {};
+  if (!selectionState[optionId][day.day]) selectionState[optionId][day.day] = { hotelName: null, attractionKeys: [] };
+  return selectionState[optionId][day.day];
+}
+
+function handleHotelSelect(day, hotelName) {
+  const sel = getDaySelection(day);
+  sel.hotelName = sel.hotelName === hotelName ? null : hotelName;
+  saveSelectionState();
+  refreshSelectionUI(day);
+}
+
+function handleAttractionToggle(day, key) {
+  const sel = getDaySelection(day);
+  const index = sel.attractionKeys.indexOf(key);
+  if (index >= 0) {
+    sel.attractionKeys.splice(index, 1);
+  } else {
+    sel.attractionKeys.push(key);
+  }
+  saveSelectionState();
+  refreshSelectionUI(day);
+}
+
+function resetDaySelection(day) {
+  const optionId = activeRouteOption.id;
+  if (selectionState[optionId]) delete selectionState[optionId][day.day];
+  saveSelectionState();
+  refreshSelectionUI(day);
+}
+
+function refreshSelectionUI(day) {
+  const sel = getDaySelection(day);
+  els.details.querySelectorAll("[data-select-hotel]").forEach((btn) => {
+    const isSelected = sel.hotelName === btn.dataset.selectHotel;
+    btn.classList.toggle("is-selected", isSelected);
+    btn.textContent = isSelected ? "✓ Für diese Nacht gewählt" : "Für diese Nacht wählen";
+    btn.setAttribute("aria-pressed", String(isSelected));
+    btn.closest(".hotel-card")?.classList.toggle("is-selected", isSelected);
+  });
+  els.details.querySelectorAll("[data-select-attraction]").forEach((btn) => {
+    const isSelected = sel.attractionKeys.includes(btn.dataset.selectAttraction);
+    btn.classList.toggle("is-selected", isSelected);
+    btn.textContent = isSelected ? "✓ Ausgewählt" : "Für Route auswählen";
+    btn.setAttribute("aria-pressed", String(isSelected));
+    btn.closest(".attraction-card")?.classList.toggle("is-selected", isSelected);
+  });
+  const bar = document.querySelector("#selectionBar");
+  if (bar) bar.innerHTML = renderSelectionBarInner(day);
+}
+
+function renderSelectionBarInner(day) {
+  const sel = getDaySelection(day);
+  const hotel = day.hotels.find((h) => h.name === sel.hotelName);
+  const attractionCount = sel.attractionKeys.length;
+  const hasSelection = Boolean(hotel) || attractionCount > 0;
+  const overflowCount = Math.max(0, attractionCount - MAX_GOOGLE_WAYPOINTS);
+
+  return `
+    <div class="selection-summary${hasSelection ? " has-selection" : ""}">
+      <p class="selection-summary-title">${hasSelection ? "Eure eigene Route für diesen Tag" : "Noch keine eigene Auswahl für diesen Tag"}</p>
+      <div class="selection-summary-rows">
+        <div class="selection-summary-row">
+          <span>Hotel</span>
+          <strong>${hotel ? escapeHtml(hotel.name) : "noch nicht gewählt"}</strong>
+        </div>
+        <div class="selection-summary-row">
+          <span>Sehenswürdigkeiten</span>
+          <strong>${attractionCount} ausgewählt</strong>
+        </div>
+      </div>
+      ${overflowCount > 0 ? `<p class="selection-note">Google Maps zeigt nur die ersten ${MAX_GOOGLE_WAYPOINTS} Sehenswürdigkeiten dieses Tages. Die Garmin-Datei enthält alle ${attractionCount}.</p>` : ""}
+    </div>
+    <div class="route-actions">
+      <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">${hasSelection ? "Meine Route in Google Maps öffnen" : "Google Tagesroute öffnen"}</a>
+      <button type="button" data-download-day-gpx>Garmin-Datei für diesen Tag</button>
+      <button type="button" data-download-option-gpx>Garmin-Datei für die ganze Reise</button>
+      <button type="button" data-focus-active-day>Tag fokussieren</button>
+      ${hasSelection ? `<button type="button" class="reset-selection-btn" data-reset-day-selection>Auswahl zurücksetzen</button>` : ""}
+    </div>
+    <p class="gpx-note">${hasSelection ? "Die Route enthält jetzt euer gewähltes Hotel und eure gewählten Sehenswürdigkeiten. " : ""}Für Garmin-Geräte: GPX herunterladen und per USB/SD in Garmin/BaseCamp importieren. Am Gerät zusätzlich „Autobahnen vermeiden" aktivieren.</p>
+  `;
+}
+
+function selectablePlacesForDay(day) {
+  const attractions = attractionPlan(day).map((item) => ({
+    key: `attraction-${slugifyFilename(item.name)}`,
+    name: item.name,
+    address: item.area,
+    lat: item.lat,
+    lng: item.lng,
+    order: nearestStopIndex(day, item.lat, item.lng)
+  }));
+  const usaSpots = (day.usaSpots || []).map((item) => ({
+    key: `usa-${slugifyFilename(item.name)}`,
+    name: item.name,
+    address: item.address,
+    lat: item.lat,
+    lng: item.lng,
+    order: nearestStopIndex(day, item.lat, item.lng)
+  }));
+  return [...attractions, ...usaSpots];
+}
+
+function nearestStopIndex(day, lat, lng) {
+  let bestIndex = 0;
+  let bestDist = Infinity;
+  day.stops.forEach((stop, index) => {
+    const dist = (stop.lat - lat) ** 2 + (stop.lng - lng) ** 2;
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestIndex = index;
+    }
+  });
+  return bestIndex;
+}
+
+function buildDayWaypoints(day) {
+  const sel = getDaySelection(day);
+  const hasSelection = Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
   const origin = day.stops[0];
-  const destination = day.stops[day.stops.length - 1];
-  const waypoints = day.stops.slice(1, -1).map((stop) => `${stop.lat},${stop.lng}`).join("|");
+  if (!hasSelection) {
+    return {
+      origin,
+      destination: day.stops[day.stops.length - 1],
+      waypoints: day.stops.slice(1, -1)
+    };
+  }
+  const pool = selectablePlacesForDay(day);
+  const waypoints = pool
+    .filter((place) => sel.attractionKeys.includes(place.key))
+    .sort((a, b) => a.order - b.order);
+  const hotel = day.hotels.find((h) => h.name === sel.hotelName);
+  const destination = hotel || day.stops[day.stops.length - 1];
+  return { origin, destination, waypoints };
+}
+
+function googleRouteLink(day) {
+  const { origin, destination, waypoints } = buildDayWaypoints(day);
+  const capped = waypoints.slice(0, MAX_GOOGLE_WAYPOINTS);
+  const waypointParam = capped.map((point) => `${point.lat},${point.lng}`).join("|");
   const params = new URLSearchParams({
     api: "1",
     travelmode: "driving",
     origin: `${origin.lat},${origin.lng}`,
     destination: `${destination.lat},${destination.lng}`
   });
-  if (waypoints) params.set("waypoints", waypoints);
+  if (waypointParam) params.set("waypoints", waypointParam);
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
 function downloadDayGpx(day) {
-  const fileName = `${slugifyFilename(activeRouteOption.label)}-tag-${String(day.day).padStart(2, "0")}-${slugifyFilename(day.title)}.gpx`;
-  downloadTextFile(fileName, buildGpx([day], `${activeRouteOption.label} Tag ${day.day} ${day.title}`), "application/gpx+xml");
+  const sel = getDaySelection(day);
+  const personalized = Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
+  const suffix = personalized ? "-meine-route" : "";
+  const fileName = `${slugifyFilename(activeRouteOption.label)}-tag-${String(day.day).padStart(2, "0")}-${slugifyFilename(day.title)}${suffix}.gpx`;
+  downloadTextFile(fileName, buildGpx([day], `${activeRouteOption.label} Tag ${day.day} ${day.title}${personalized ? " (eigene Auswahl)" : ""}`), "application/gpx+xml");
 }
 
 function downloadOptionGpx() {
-  const fileName = `${slugifyFilename(activeRouteOption.label)}-${slugifyFilename(activeRouteOption.name)}-alle-tage.gpx`;
-  downloadTextFile(fileName, buildGpx(currentRouteData, `${activeRouteOption.label} ${activeRouteOption.headline}`), "application/gpx+xml");
+  const personalized = currentRouteData.some((day) => {
+    const sel = getDaySelection(day);
+    return Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
+  });
+  const suffix = personalized ? "-meine-route" : "";
+  const fileName = `${slugifyFilename(activeRouteOption.label)}-${slugifyFilename(activeRouteOption.name)}-alle-tage${suffix}.gpx`;
+  downloadTextFile(fileName, buildGpx(currentRouteData, `${activeRouteOption.label} ${activeRouteOption.headline}${personalized ? " (eigene Auswahl)" : ""}`), "application/gpx+xml");
 }
 
 function buildGpx(days, title) {
-  const routes = days.map((day) => `
+  const routes = days.map((day) => {
+    const { origin, destination, waypoints } = buildDayWaypoints(day);
+    const points = [origin, ...waypoints, destination];
+    return `
   <rte>
     <name>${xmlEscape(`Tag ${day.day} - ${day.title}`)}</name>
     <desc>${xmlEscape(`${day.distance} · ${day.focus} · Autobahnen am Garmin vermeiden`)}</desc>
-${day.stops.map((stop, index) => `    <rtept lat="${stop.lat}" lon="${stop.lng}">
-      <name>${xmlEscape(`${day.day}.${index + 1} ${stop.name}`)}</name>
-      <desc>${xmlEscape(stop.address)}</desc>
+${points.map((point, index) => `    <rtept lat="${point.lat}" lon="${point.lng}">
+      <name>${xmlEscape(`${day.day}.${index + 1} ${point.name}`)}</name>
+      ${point.address ? `<desc>${xmlEscape(point.address)}</desc>` : ""}
     </rtept>`).join("\n")}
-  </rte>`).join("\n");
+  </rte>`;
+  }).join("\n");
 
   const tracks = days.map((day) => `
   <trk>
@@ -968,10 +1169,15 @@ function placeStory(name, kind, note) {
   return `${base} ${note || ""}`.trim();
 }
 
-function attractionCard(attraction) {
+function attractionCard(attraction, day, sel) {
   const story = placeStory(attraction.name, "attraction", attraction.note);
+  const key = `attraction-${slugifyFilename(attraction.name)}`;
+  const isSelected = sel.attractionKeys.includes(key);
   return `
-    <article class="attraction-card place-open-card" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(attraction.name)} öffnen">
+    <article class="attraction-card place-open-card${isSelected ? " is-selected" : ""}" tabindex="0" role="button" aria-label="Details zu ${escapeHtmlAttr(attraction.name)} öffnen">
+      <button type="button" class="select-toggle-btn" data-select-attraction="${escapeHtmlAttr(key)}" aria-pressed="${isSelected}">
+        ${isSelected ? "✓ Ausgewählt" : "Für Route auswählen"}
+      </button>
       <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>

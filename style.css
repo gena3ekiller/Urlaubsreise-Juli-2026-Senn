@@ -11,6 +11,7 @@
   --accent: #ffb84d;
   --accent-2: #54d6ff;
   --danger: #ff8b8b;
+  --success: #5be8a4;
   --shadow: 0 20px 70px rgba(0, 0, 0, 0.36);
 }
 
@@ -662,6 +663,131 @@ body.map-collapsed .map-panel {
 .gpx-note {
   border-left-color: var(--accent-2);
   color: var(--muted);
+}
+
+.how-to-text {
+  margin: 6px 0 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(84, 214, 255, 0.08);
+  padding: 10px 12px;
+  color: var(--soft);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.selection-bar {
+  margin: 14px 0 0;
+  border: 1px solid rgba(255, 184, 77, 0.4);
+  border-radius: 16px;
+  background: rgba(255, 184, 77, 0.08);
+  padding: 14px;
+}
+
+.selection-summary-title {
+  margin: 0 0 10px;
+  font-size: 1.08rem;
+  font-weight: 950;
+  color: var(--accent);
+}
+
+.selection-summary.has-selection .selection-summary-title {
+  color: var(--success);
+}
+
+.selection-summary-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.selection-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 10px 12px;
+}
+
+.selection-summary-row span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.selection-summary-row strong {
+  overflow-wrap: anywhere;
+  font-size: 1.02rem;
+}
+
+.selection-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.selection-bar .route-actions {
+  margin-top: 12px;
+}
+
+.selection-bar .route-actions a,
+.selection-bar .route-actions button {
+  min-height: 50px;
+  font-size: 1.02rem;
+  font-weight: 850;
+  padding: 0 16px;
+}
+
+.selection-bar .route-actions a:first-child {
+  border-color: rgba(89, 232, 164, 0.65);
+  background: rgba(89, 232, 164, 0.2);
+  color: var(--success);
+  font-weight: 950;
+}
+
+.reset-selection-btn {
+  border-color: rgba(255, 139, 139, 0.55) !important;
+  background: rgba(255, 139, 139, 0.14) !important;
+  color: #ffd9d9 !important;
+}
+
+.select-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 54px;
+  margin-bottom: 10px;
+  border: 2px solid rgba(84, 214, 255, 0.45);
+  border-radius: 14px;
+  background: rgba(84, 214, 255, 0.14);
+  color: var(--text);
+  font-size: 1.04rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.select-toggle-btn:hover {
+  border-color: rgba(84, 214, 255, 0.8);
+}
+
+.select-toggle-btn.is-selected {
+  border-color: var(--success);
+  background: rgba(89, 232, 164, 0.22);
+  color: var(--success);
+}
+
+.hotel-card.is-selected,
+.attraction-card.is-selected {
+  border-color: var(--success);
+  background: rgba(89, 232, 164, 0.08);
 }
 
 .quick-grid {
