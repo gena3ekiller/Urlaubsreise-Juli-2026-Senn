@@ -993,7 +993,7 @@ function selectablePlacesForDay(day) {
     address: item.area,
     lat: item.lat,
     lng: item.lng,
-    order: nearestStopIndex(day, item.lat, item.lng)
+    order: routeProgress(day, item.lat, item.lng)
   }));
   const usaSpots = (day.usaSpots || []).map((item) => ({
     key: `usa-${slugifyFilename(item.name)}`,
@@ -1001,22 +1001,51 @@ function selectablePlacesForDay(day) {
     address: item.address,
     lat: item.lat,
     lng: item.lng,
-    order: nearestStopIndex(day, item.lat, item.lng)
+    order: routeProgress(day, item.lat, item.lng)
   }));
   return [...attractions, ...usaSpots];
 }
 
-function nearestStopIndex(day, lat, lng) {
-  let bestIndex = 0;
+// Ordnet einen Punkt entlang der tatsächlich gefahrenen Streckenlinie ein (statt nur
+// nach dem nächsten Fixpunkt), damit ausgewählte Sehenswürdigkeiten in Fahrtrichtung
+// sortiert werden und die Route nicht unnötig hin- und herspringt.
+function routeProgress(day, lat, lng) {
+  const points = getRoutePoints(day);
+  if (!points || points.length < 2) return 0;
+
   let bestDist = Infinity;
-  day.stops.forEach((stop, index) => {
-    const dist = (stop.lat - lat) ** 2 + (stop.lng - lng) ** 2;
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestIndex = index;
+  let bestProgress = 0;
+  let cumulative = 0;
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    const segLength = pointDistance(a, b);
+    const projection = projectPointOnSegment(a, b, [lat, lng]);
+    const distToPoint = pointDistance([lat, lng], projection.point);
+    if (distToPoint < bestDist) {
+      bestDist = distToPoint;
+      bestProgress = cumulative + projection.t * segLength;
     }
-  });
-  return bestIndex;
+    cumulative += segLength;
+  }
+
+  return bestProgress;
+}
+
+function pointDistance(a, b) {
+  const dx = a[0] - b[0];
+  const dy = a[1] - b[1];
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function projectPointOnSegment(a, b, p) {
+  const abx = b[0] - a[0];
+  const aby = b[1] - a[1];
+  const lengthSq = abx * abx + aby * aby;
+  if (lengthSq === 0) return { t: 0, point: a };
+  const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * abx + (p[1] - a[1]) * aby) / lengthSq));
+  return { t, point: [a[0] + t * abx, a[1] + t * aby] };
 }
 
 function buildDayWaypoints(day) {
