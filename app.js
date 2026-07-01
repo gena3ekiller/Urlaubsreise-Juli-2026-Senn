@@ -471,39 +471,108 @@ function selectDay(dayNumber, options = { fit: true }) {
 function renderActiveRoute(day) {
   markerLayer.clearLayers();
   activeRouteLayer.clearLayers();
+  const sel = getDaySelection(day);
+  const hasSelection = Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
+
+  if (hasSelection) {
+    renderPersonalizedRoute(day);
+  } else {
+    renderDefaultRoute(day);
+  }
+}
+
+function renderDefaultRoute(day) {
   const dayColor = getDayColor(day);
   const points = getRoutePoints(day);
+  drawRouteLine(points, dayColor, false);
 
+  day.stops.forEach((stop, index) => {
+    const position = offsetDuplicate(stop, index, day.stops);
+    addNumberedMarker(position, day.day, index + 1, dayColor, `${day.day}.${index + 1} ${stop.name}`, stop.address, stop.links?.google);
+  });
+}
+
+function renderPersonalizedRoute(day) {
+  const dayColor = getDayColor(day);
+  const { origin, destination, waypoints } = buildDayWaypoints(day);
+  const orderedPoints = [origin, ...waypoints, destination];
+
+  drawRouteLine(orderedPoints.map((point) => [point.lat, point.lng]), dayColor, true);
+  orderedPoints.forEach((point, index) => {
+    addNumberedMarker([point.lat, point.lng], day.day, index + 1, dayColor, `${day.day}.${index + 1} ${point.name}`, point.address, point.links?.google);
+  });
+
+  const token = ++routeFetchToken;
+  window.clearTimeout(routeFetchTimer);
+  routeFetchTimer = window.setTimeout(async () => {
+    const roadPoints = await fetchRoadRoute(orderedPoints);
+    if (token !== routeFetchToken || !activeDay || activeDay.day !== day.day || !roadPoints) return;
+    activeRouteLayer.clearLayers();
+    markerLayer.clearLayers();
+    drawRouteLine(roadPoints, dayColor, false);
+    orderedPoints.forEach((point, index) => {
+      addNumberedMarker([point.lat, point.lng], day.day, index + 1, dayColor, `${day.day}.${index + 1} ${point.name}`, point.address, point.links?.google);
+    });
+  }, 400);
+}
+
+function drawRouteLine(points, color, dashed) {
   L.polyline(points, {
     color: "#071018",
     weight: 10,
     opacity: 0.74,
     lineCap: "round",
-    lineJoin: "round"
+    lineJoin: "round",
+    dashArray: dashed ? "1 16" : null
   }).addTo(activeRouteLayer);
 
   L.polyline(points, {
-    color: dayColor,
+    color,
     weight: 5,
     opacity: 0.96,
     lineCap: "round",
-    lineJoin: "round"
+    lineJoin: "round",
+    dashArray: dashed ? "1 16" : null
   }).addTo(activeRouteLayer);
+}
 
-  day.stops.forEach((stop, index) => {
-    const position = offsetDuplicate(stop, index, day.stops);
-    const marker = L.marker(position, {
-      icon: numberedIcon(day.day, index + 1, dayColor),
-      keyboard: true,
-      title: `${day.day}.${index + 1} ${stop.name}`
-    }).addTo(markerLayer);
+function addNumberedMarker(position, dayNumber, number, color, title, address, googleLink) {
+  const marker = L.marker(position, {
+    icon: numberedIcon(dayNumber, number, color),
+    keyboard: true,
+    title
+  }).addTo(markerLayer);
 
-    marker.bindPopup(`
-      <strong>Tag ${day.day}.${index + 1} · ${escapeHtml(stop.name)}</strong>
-      <span>${escapeHtml(stop.address)}</span>
-      <a href="${stop.links.google}" target="_blank" rel="noreferrer">Google Maps öffnen</a>
-    `);
-  });
+  marker.bindPopup(`
+    <strong>${escapeHtml(title)}</strong>
+    ${address ? `<span>${escapeHtml(address)}</span>` : ""}
+    ${googleLink ? `<a href="${googleLink}" target="_blank" rel="noreferrer">Google Maps öffnen</a>` : ""}
+  `);
+  return marker;
+}
+
+const routeGeometryFetchCache = new Map();
+let routeFetchToken = 0;
+let routeFetchTimer = null;
+
+async function fetchRoadRoute(points) {
+  const cacheKey = points.map((point) => `${point.lat.toFixed(5)},${point.lng.toFixed(5)}`).join(";");
+  if (routeGeometryFetchCache.has(cacheKey)) return routeGeometryFetchCache.get(cacheKey);
+
+  try {
+    const coords = points.map((point) => `${point.lng},${point.lat}`).join(";");
+    const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`);
+    if (!response.ok) throw new Error(`OSRM HTTP ${response.status}`);
+    const payload = await response.json();
+    const coordinates = payload.routes?.[0]?.geometry?.coordinates;
+    if (!coordinates?.length) throw new Error("Keine Route gefunden");
+    const roadPoints = coordinates.map(([lng, lat]) => [lat, lng]);
+    routeGeometryFetchCache.set(cacheKey, roadPoints);
+    return roadPoints;
+  } catch (error) {
+    console.warn("Live-Route konnte nicht geladen werden, zeige direkte Verbindung.", error);
+    return null;
+  }
 }
 
 function renderDetails(day) {
@@ -733,12 +802,20 @@ function mealCard(meal) {
 
 function focusDay(day, options = {}) {
   renderActiveRoute(day);
-  const bounds = L.latLngBounds(getRoutePoints(day));
+  const bounds = L.latLngBounds(getMapBoundsPoints(day));
   map.fitBounds(bounds, {
     paddingTopLeft: [30, options.padding ? 70 : 90],
     paddingBottomRight: [30, 46],
     maxZoom: day.distance.includes("0-120") ? 10 : 11
   });
+}
+
+function getMapBoundsPoints(day) {
+  const sel = getDaySelection(day);
+  const hasSelection = Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
+  if (!hasSelection) return getRoutePoints(day);
+  const { origin, destination, waypoints } = buildDayWaypoints(day);
+  return [origin, ...waypoints, destination].map((point) => [point.lat, point.lng]);
 }
 
 function fitAll() {
@@ -887,6 +964,7 @@ function refreshSelectionUI(day) {
       btn.setAttribute("aria-pressed", String(isSelected));
       btn.closest(".attraction-card")?.classList.toggle("is-selected", isSelected);
     });
+    focusDay(day, { padding: true });
   }
   openSelectionDrawer();
 }
@@ -993,6 +1071,7 @@ function selectablePlacesForDay(day) {
     address: item.area,
     lat: item.lat,
     lng: item.lng,
+    links: { google: item.google },
     order: routeProgress(day, item.lat, item.lng)
   }));
   const usaSpots = (day.usaSpots || []).map((item) => ({
@@ -1001,6 +1080,7 @@ function selectablePlacesForDay(day) {
     address: item.address,
     lat: item.lat,
     lng: item.lng,
+    links: item.links,
     order: routeProgress(day, item.lat, item.lng)
   }));
   return [...attractions, ...usaSpots];
