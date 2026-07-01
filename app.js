@@ -56,6 +56,7 @@ let selectionState = loadSelectionState();
 let routeLayer = L.layerGroup();
 let markerLayer = L.layerGroup();
 let activeRouteLayer = L.layerGroup();
+let poiLayer = L.layerGroup();
 let modalMap = null;
 
 const map = L.map("map", {
@@ -74,6 +75,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 routeLayer.addTo(map);
 markerLayer.addTo(map);
 activeRouteLayer.addTo(map);
+poiLayer.addTo(map);
 
 async function init() {
   await loadRouteGeometry();
@@ -465,6 +467,7 @@ function selectDay(dayNumber, options = { fit: true }) {
   document.querySelector(`.day-card[data-day="${activeDay.day}"]`)?.classList.add("active");
   renderActiveRoute(activeDay);
   renderDetails(activeDay);
+  renderPointsOfInterest(activeDay);
   if (options.fit) focusDay(activeDay);
 }
 
@@ -548,6 +551,105 @@ function addNumberedMarker(position, dayNumber, number, color, title, address, g
     ${address ? `<span>${escapeHtml(address)}</span>` : ""}
     ${googleLink ? `<a href="${googleLink}" target="_blank" rel="noreferrer">Google Maps öffnen</a>` : ""}
   `);
+  return marker;
+}
+
+// Zeigt Hotels, Sehenswürdigkeiten und Restaurants des Tages zusätzlich zur Route als
+// eigene Punkte an. Hover = Kurzinfo mit Vorschaubild, Klick öffnet das volle Infofenster
+// (dieselbe Karte, die auch unten in der Liste beim Anklicken erscheint).
+function renderPointsOfInterest(day) {
+  poiLayer.clearLayers();
+
+  day.hotels.forEach((hotel) => {
+    addPoiMarker({
+      lat: hotel.lat,
+      lng: hotel.lng,
+      kind: "hotel",
+      query: hotel.name,
+      icon: "🏨",
+      key: `hotel-${slugifyFilename(hotel.name)}`,
+      title: hotel.name,
+      subtitle: hotel.area
+    });
+  });
+
+  attractionPlan(day).forEach((attraction) => {
+    addPoiMarker({
+      lat: attraction.lat,
+      lng: attraction.lng,
+      kind: "attraction",
+      query: attraction.query,
+      icon: "📍",
+      key: `attraction-${slugifyFilename(attraction.name)}`,
+      title: attraction.name,
+      subtitle: attraction.area
+    });
+  });
+
+  (day.usaSpots || []).forEach((spot) => {
+    addPoiMarker({
+      lat: spot.lat,
+      lng: spot.lng,
+      kind: spot.kind,
+      query: spot.query,
+      icon: "🍔",
+      key: `usa-${slugifyFilename(spot.name)}`,
+      title: spot.name,
+      subtitle: spot.area
+    });
+  });
+
+  mealPlan(day).forEach((meal) => {
+    addPoiMarker({
+      lat: meal.lat,
+      lng: meal.lng,
+      kind: "restaurant",
+      query: meal.search,
+      icon: "🍽️",
+      key: `meal-${slugifyFilename(meal.label)}`,
+      title: meal.title,
+      subtitle: `${meal.label} · ${meal.place}`
+    });
+  });
+}
+
+function addPoiMarker(info) {
+  const pinClass = info.kind === "hotel" ? "poi-pin-hotel" : info.kind === "attraction" ? "poi-pin-attraction" : "poi-pin-restaurant";
+  const icon = L.divIcon({
+    className: "poi-marker-wrap",
+    html: `<div class="poi-pin ${pinClass}">${info.icon}</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 26],
+    popupAnchor: [0, -22]
+  });
+
+  const marker = L.marker([info.lat, info.lng], { icon, keyboard: true, title: info.title }).addTo(poiLayer);
+
+  marker.on("mouseover", () => {
+    const cacheKey = `${info.kind}|${info.query}|${info.lat}|${info.lng}`;
+    const cached = placePhotoCache.get(cacheKey);
+    const thumb = cached?.photos?.[0];
+    marker.bindTooltip(`
+      <div class="poi-tooltip-content">
+        ${thumb ? `<img src="${thumb}" alt="" />` : ""}
+        <div class="poi-tooltip-text">
+          <strong>${escapeHtml(info.title)}</strong>
+          ${info.subtitle ? `<span>${escapeHtml(info.subtitle)}</span>` : ""}
+        </div>
+      </div>
+    `, { direction: "top", offset: [0, -20], opacity: 0.98, className: "poi-tooltip" }).openTooltip();
+  });
+
+  marker.on("mouseout", () => {
+    marker.closeTooltip();
+    marker.unbindTooltip();
+  });
+
+  marker.on("click", () => {
+    const card = document.querySelector(`.place-photo-card[data-place-marker-key="${info.key}"]`);
+    if (card) openPlaceModal(card);
+  });
+
   return marker;
 }
 
@@ -716,7 +818,7 @@ function hotelCard(hotel, day, sel) {
       <button type="button" class="select-toggle-btn" data-select-hotel="${escapeHtmlAttr(hotel.name)}" aria-pressed="${isSelected}">
         ${isSelected ? "✓ Für diese Nacht gewählt" : "Für diese Nacht wählen"}
       </button>
-      <div class="place-photo-card" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
+      <div class="place-photo-card" data-place-marker-key="hotel-${slugifyFilename(hotel.name)}" data-place-query="${escapeHtmlAttr(hotel.name)}" data-place-address="${escapeHtmlAttr(hotel.address)}" data-place-title="${escapeHtmlAttr(hotel.name)}" data-place-note="${escapeHtmlAttr(`${hotel.area} · ${hotel.parking}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${hotel.links.google}" data-place-lat="${hotel.lat}" data-place-lng="${hotel.lng}" data-place-kind="hotel">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -754,7 +856,7 @@ function usaSpotCard(spot, day, sel) {
       <button type="button" class="select-toggle-btn" data-select-attraction="${escapeHtmlAttr(key)}" aria-pressed="${isSelected}">
         ${isSelected ? "✓ Ausgewählt" : "Für Route auswählen"}
       </button>
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
+      <div class="place-photo-card attraction-photo-card" data-place-marker-key="${key}" data-place-query="${escapeHtmlAttr(spot.query)}" data-place-address="${escapeHtmlAttr(spot.area)}" data-place-title="${escapeHtmlAttr(spot.name)}" data-place-note="${escapeHtmlAttr(spot.note)}" data-place-story="${escapeHtmlAttr(placeStory(spot.name, spot.kind, spot.note))}" data-place-google="${spot.links.google}" data-place-lat="${spot.lat}" data-place-lng="${spot.lng}" data-place-kind="${spot.kind}">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
@@ -783,7 +885,7 @@ function mealCard(meal) {
       </div>
       <h4>${escapeHtml(meal.title)}</h4>
       <p>${escapeHtml(meal.place)} · ${escapeHtml(meal.note)}</p>
-      <div class="place-photo-card meal-photo-card" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
+      <div class="place-photo-card meal-photo-card" data-place-marker-key="meal-${slugifyFilename(meal.label)}" data-place-query="${escapeHtmlAttr(meal.search)}" data-place-address="${escapeHtmlAttr(meal.place)}" data-place-title="${escapeHtmlAttr(meal.title)}" data-place-note="${escapeHtmlAttr(`${meal.label} ${meal.time} · ${meal.note}`)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${meal.google}" data-place-lat="${meal.lat}" data-place-lng="${meal.lng}" data-place-kind="restaurant">
         <div class="place-photo-empty">
           <span>Echte Google-Fotos</span>
           <strong>API-Key eintragen</strong>
@@ -820,6 +922,7 @@ function getMapBoundsPoints(day) {
 
 function fitAll() {
   activeRouteLayer.clearLayers();
+  poiLayer.clearLayers();
   renderOverviewMarkers();
   map.fitBounds(L.latLngBounds(allRoutePoints), {
     paddingTopLeft: [38, 78],
@@ -1388,7 +1491,7 @@ function attractionCard(attraction, day, sel) {
       <button type="button" class="select-toggle-btn" data-select-attraction="${escapeHtmlAttr(key)}" aria-pressed="${isSelected}">
         ${isSelected ? "✓ Ausgewählt" : "Für Route auswählen"}
       </button>
-      <div class="place-photo-card attraction-photo-card" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
+      <div class="place-photo-card attraction-photo-card" data-place-marker-key="${key}" data-place-query="${escapeHtmlAttr(attraction.query)}" data-place-address="${escapeHtmlAttr(attraction.area)}" data-place-title="${escapeHtmlAttr(attraction.name)}" data-place-note="${escapeHtmlAttr(attraction.note)}" data-place-story="${escapeHtmlAttr(story)}" data-place-google="${attraction.google}" data-place-lat="${attraction.lat}" data-place-lng="${attraction.lng}" data-place-kind="attraction">
         <div class="place-photo-empty">
           <span>Google-Fotos</span>
           <strong>werden geladen</strong>
