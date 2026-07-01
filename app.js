@@ -14,7 +14,11 @@ const els = {
   mapToggle: document.querySelector("#mapToggleBtn"),
   routeOptions: document.querySelector("#routeOptions"),
   placeModal: document.querySelector("#placeModal"),
-  placeModalBody: document.querySelector("#placeModalBody")
+  placeModalBody: document.querySelector("#placeModalBody"),
+  selectionDrawer: document.querySelector("#selectionDrawer"),
+  selectionDrawerBody: document.querySelector("#selectionDrawerBody"),
+  selectionDrawerBtn: document.querySelector("#selectionDrawerBtn"),
+  selectionBadge: document.querySelector("#selectionCountBadge")
 };
 
 const colors = ["#ffb84d", "#54d6ff", "#8af08f", "#ff7ca8", "#c8a5ff", "#ffd166", "#47e5bc"];
@@ -118,6 +122,41 @@ function bindEvents() {
     if (event.target.closest("[data-close-place-modal]")) {
       closePlaceModal();
     }
+    if (event.target.closest("[data-close-selection-drawer]")) {
+      closeSelectionDrawer();
+    }
+  });
+
+  els.selectionDrawerBtn?.addEventListener("click", () => openSelectionDrawer());
+
+  els.selectionDrawer?.addEventListener("click", (event) => {
+    const removeHotelBtn = event.target.closest("[data-drawer-remove-hotel]");
+    if (removeHotelBtn) {
+      const day = currentRouteData.find((d) => d.day === Number(removeHotelBtn.dataset.drawerRemoveHotel));
+      if (day) handleHotelSelect(day, getDaySelection(day).hotelName);
+      return;
+    }
+    const removeAttractionBtn = event.target.closest("[data-drawer-remove-attraction-day]");
+    if (removeAttractionBtn) {
+      const day = currentRouteData.find((d) => d.day === Number(removeAttractionBtn.dataset.drawerRemoveAttractionDay));
+      if (day) handleAttractionToggle(day, removeAttractionBtn.dataset.drawerRemoveAttractionKey);
+      return;
+    }
+    const resetDayBtn = event.target.closest("[data-drawer-reset-day]");
+    if (resetDayBtn) {
+      const day = currentRouteData.find((d) => d.day === Number(resetDayBtn.dataset.drawerResetDay));
+      if (day) resetDaySelection(day);
+      return;
+    }
+    const dayGpxBtn = event.target.closest("[data-drawer-day-gpx]");
+    if (dayGpxBtn) {
+      const day = currentRouteData.find((d) => d.day === Number(dayGpxBtn.dataset.drawerDayGpx));
+      if (day) downloadDayGpx(day);
+      return;
+    }
+    if (event.target.closest("[data-download-option-gpx]")) {
+      downloadOptionGpx();
+    }
   });
 
   els.details.addEventListener("click", (event) => {
@@ -131,16 +170,8 @@ function bindEvents() {
       handleAttractionToggle(activeDay, attractionBtn.dataset.selectAttraction);
       return;
     }
-    if (event.target.closest("[data-reset-day-selection]")) {
-      resetDaySelection(activeDay);
-      return;
-    }
-    if (event.target.closest("[data-download-day-gpx]")) {
-      downloadDayGpx(activeDay);
-      return;
-    }
-    if (event.target.closest("[data-download-option-gpx]")) {
-      downloadOptionGpx();
+    if (event.target.closest("[data-open-selection-drawer]")) {
+      openSelectionDrawer();
       return;
     }
     if (event.target.closest("[data-focus-active-day]")) {
@@ -149,7 +180,10 @@ function bindEvents() {
   });
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closePlaceModal();
+    if (event.key === "Escape") {
+      closePlaceModal();
+      closeSelectionDrawer();
+    }
   });
 
   window.addEventListener("resize", () => {
@@ -193,6 +227,7 @@ function selectRouteOption(optionId, settings = {}) {
   els.search.value = "";
   renderRouteOptions();
   updateTripSummary();
+  updateSelectionBadge();
   renderDayList(currentRouteData);
   renderPrintDayPicker();
   renderAllRoutes();
@@ -490,8 +525,11 @@ function renderDetails(day) {
         <div><span>Fokus</span><strong>${escapeHtml(day.focus)}</strong></div>
         <div><span>Stopps</span><strong>${day.stops.length}</strong></div>
       </div>
-      <p class="how-to-text">So geht's: Bei „Hotelvorschläge" und „Sehenswürdigkeiten" weiter unten anklicken, was ihr für diesen Tag wollt. Hier oben erscheint dann automatisch eure eigene Route zum Öffnen oder Herunterladen.</p>
-      <div class="selection-bar" id="selectionBar">${renderSelectionBarInner(day)}</div>
+      <p class="how-to-text">So geht's: Bei „Hotelvorschläge" und „Sehenswürdigkeiten" weiter unten anklicken, was ihr für diesen Tag wollt. Rechts öffnet sich dann automatisch eure eigene Route zum Öffnen in Google Maps oder zum Herunterladen für Garmin.</p>
+      <div class="route-actions">
+        <button type="button" data-open-selection-drawer>Meine Auswahl anzeigen</button>
+        <button type="button" data-focus-active-day>Tag fokussieren</button>
+      </div>
     </article>
 
     <section class="detail-card overview-card">
@@ -833,55 +871,118 @@ function resetDaySelection(day) {
 }
 
 function refreshSelectionUI(day) {
-  const sel = getDaySelection(day);
-  els.details.querySelectorAll("[data-select-hotel]").forEach((btn) => {
-    const isSelected = sel.hotelName === btn.dataset.selectHotel;
-    btn.classList.toggle("is-selected", isSelected);
-    btn.textContent = isSelected ? "✓ Für diese Nacht gewählt" : "Für diese Nacht wählen";
-    btn.setAttribute("aria-pressed", String(isSelected));
-    btn.closest(".hotel-card")?.classList.toggle("is-selected", isSelected);
-  });
-  els.details.querySelectorAll("[data-select-attraction]").forEach((btn) => {
-    const isSelected = sel.attractionKeys.includes(btn.dataset.selectAttraction);
-    btn.classList.toggle("is-selected", isSelected);
-    btn.textContent = isSelected ? "✓ Ausgewählt" : "Für Route auswählen";
-    btn.setAttribute("aria-pressed", String(isSelected));
-    btn.closest(".attraction-card")?.classList.toggle("is-selected", isSelected);
-  });
-  const bar = document.querySelector("#selectionBar");
-  if (bar) bar.innerHTML = renderSelectionBarInner(day);
+  if (activeDay && day.day === activeDay.day) {
+    const sel = getDaySelection(day);
+    els.details.querySelectorAll("[data-select-hotel]").forEach((btn) => {
+      const isSelected = sel.hotelName === btn.dataset.selectHotel;
+      btn.classList.toggle("is-selected", isSelected);
+      btn.textContent = isSelected ? "✓ Für diese Nacht gewählt" : "Für diese Nacht wählen";
+      btn.setAttribute("aria-pressed", String(isSelected));
+      btn.closest(".hotel-card")?.classList.toggle("is-selected", isSelected);
+    });
+    els.details.querySelectorAll("[data-select-attraction]").forEach((btn) => {
+      const isSelected = sel.attractionKeys.includes(btn.dataset.selectAttraction);
+      btn.classList.toggle("is-selected", isSelected);
+      btn.textContent = isSelected ? "✓ Ausgewählt" : "Für Route auswählen";
+      btn.setAttribute("aria-pressed", String(isSelected));
+      btn.closest(".attraction-card")?.classList.toggle("is-selected", isSelected);
+    });
+  }
+  openSelectionDrawer();
 }
 
-function renderSelectionBarInner(day) {
+function openSelectionDrawer() {
+  if (!els.selectionDrawer) return;
+  els.selectionDrawer.setAttribute("aria-hidden", "false");
+  document.body.classList.add("selection-drawer-open");
+  renderSelectionDrawer();
+}
+
+function closeSelectionDrawer() {
+  if (!els.selectionDrawer || els.selectionDrawer.getAttribute("aria-hidden") === "true") return;
+  els.selectionDrawer.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("selection-drawer-open");
+}
+
+function totalSelectionCount() {
+  const optionSelections = selectionState[activeRouteOption.id] || {};
+  return Object.values(optionSelections).reduce((total, sel) => {
+    return total + (sel.hotelName ? 1 : 0) + (sel.attractionKeys?.length || 0);
+  }, 0);
+}
+
+function updateSelectionBadge() {
+  if (!els.selectionBadge) return;
+  const count = totalSelectionCount();
+  els.selectionBadge.textContent = String(count);
+  els.selectionBadge.hidden = count === 0;
+}
+
+function renderSelectionDrawer() {
+  updateSelectionBadge();
+  if (!els.selectionDrawerBody) return;
+
+  const daysWithSelection = currentRouteData.filter((day) => {
+    const sel = getDaySelection(day);
+    return Boolean(sel.hotelName) || sel.attractionKeys.length > 0;
+  });
+
+  if (!daysWithSelection.length) {
+    els.selectionDrawerBody.innerHTML = `
+      <p class="selection-empty">Noch nichts ausgewählt. Klickt bei einem Tag auf „Für diese Nacht wählen" oder „Für Route auswählen", dann erscheint eure eigene Route hier.</p>
+    `;
+    return;
+  }
+
+  els.selectionDrawerBody.innerHTML = `
+    ${daysWithSelection.map((day) => renderSelectionDayBlock(day)).join("")}
+    <div class="selection-drawer-footer">
+      <button type="button" data-download-option-gpx>Garmin-Datei für die ganze Reise</button>
+      <p class="gpx-note">Enthält alle Tage der Reise: für Tage mit eigener Auswahl eure Route, sonst die Standard-Tagesroute. Herunterladen und per USB/SD in Garmin/BaseCamp importieren.</p>
+    </div>
+  `;
+}
+
+function renderSelectionDayBlock(day) {
   const sel = getDaySelection(day);
   const hotel = day.hotels.find((h) => h.name === sel.hotelName);
-  const attractionCount = sel.attractionKeys.length;
-  const hasSelection = Boolean(hotel) || attractionCount > 0;
-  const overflowCount = Math.max(0, attractionCount - MAX_GOOGLE_WAYPOINTS);
+  const pool = selectablePlacesForDay(day);
+  const selectedSights = pool
+    .filter((place) => sel.attractionKeys.includes(place.key))
+    .sort((a, b) => a.order - b.order);
+  const overflowCount = Math.max(0, selectedSights.length - MAX_GOOGLE_WAYPOINTS);
 
   return `
-    <div class="selection-summary${hasSelection ? " has-selection" : ""}">
-      <p class="selection-summary-title">${hasSelection ? "Eure eigene Route für diesen Tag" : "Noch keine eigene Auswahl für diesen Tag"}</p>
-      <div class="selection-summary-rows">
-        <div class="selection-summary-row">
-          <span>Hotel</span>
-          <strong>${hotel ? escapeHtml(hotel.name) : "noch nicht gewählt"}</strong>
+    <article class="selection-day-block">
+      <header>
+        <div>
+          <span>Tag ${day.day}</span>
+          <strong>${escapeHtml(day.title)}</strong>
         </div>
-        <div class="selection-summary-row">
-          <span>Sehenswürdigkeiten</span>
-          <strong>${attractionCount} ausgewählt</strong>
+        <button type="button" class="selection-day-reset" data-drawer-reset-day="${day.day}" aria-label="Auswahl für Tag ${day.day} zurücksetzen">Zurücksetzen</button>
+      </header>
+      ${hotel ? `
+        <div class="selection-line">
+          <span>🏨 ${escapeHtml(hotel.name)}</span>
+          <button type="button" data-drawer-remove-hotel="${day.day}" aria-label="Hotel für Tag ${day.day} entfernen">Entfernen</button>
         </div>
+      ` : `<p class="selection-line-empty">Noch kein Hotel gewählt</p>`}
+      ${selectedSights.length ? `
+        <ul class="selection-sight-list">
+          ${selectedSights.map((place) => `
+            <li>
+              <span>📍 ${escapeHtml(place.name)}</span>
+              <button type="button" data-drawer-remove-attraction-day="${day.day}" data-drawer-remove-attraction-key="${escapeHtmlAttr(place.key)}" aria-label="${escapeHtmlAttr(place.name)} entfernen">Entfernen</button>
+            </li>
+          `).join("")}
+        </ul>
+      ` : ""}
+      ${overflowCount > 0 ? `<p class="selection-note">Google Maps zeigt nur die ersten ${MAX_GOOGLE_WAYPOINTS} Sehenswürdigkeiten. Die Garmin-Datei enthält alle ${selectedSights.length}.</p>` : ""}
+      <div class="selection-day-actions">
+        <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">Tag ${day.day} in Google Maps</a>
+        <button type="button" data-drawer-day-gpx="${day.day}">Garmin-Datei Tag ${day.day}</button>
       </div>
-      ${overflowCount > 0 ? `<p class="selection-note">Google Maps zeigt nur die ersten ${MAX_GOOGLE_WAYPOINTS} Sehenswürdigkeiten dieses Tages. Die Garmin-Datei enthält alle ${attractionCount}.</p>` : ""}
-    </div>
-    <div class="route-actions">
-      <a href="${googleRouteLink(day)}" target="_blank" rel="noreferrer">${hasSelection ? "Meine Route in Google Maps öffnen" : "Google Tagesroute öffnen"}</a>
-      <button type="button" data-download-day-gpx>Garmin-Datei für diesen Tag</button>
-      <button type="button" data-download-option-gpx>Garmin-Datei für die ganze Reise</button>
-      <button type="button" data-focus-active-day>Tag fokussieren</button>
-      ${hasSelection ? `<button type="button" class="reset-selection-btn" data-reset-day-selection>Auswahl zurücksetzen</button>` : ""}
-    </div>
-    <p class="gpx-note">${hasSelection ? "Die Route enthält jetzt euer gewähltes Hotel und eure gewählten Sehenswürdigkeiten. " : ""}Für Garmin-Geräte: GPX herunterladen und per USB/SD in Garmin/BaseCamp importieren. Am Gerät zusätzlich „Autobahnen vermeiden" aktivieren.</p>
+    </article>
   `;
 }
 

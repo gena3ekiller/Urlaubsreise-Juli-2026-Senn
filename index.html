@@ -18,6 +18,9 @@
             <h1>Basel → Caen → Basel</h1>
           </div>
           <div class="brand-actions">
+            <button class="icon-button" id="selectionDrawerBtn" type="button" title="Meine Auswahl" aria-label="Meine Auswahl anzeigen">
+              🧳<span class="selection-count-badge" id="selectionCountBadge" hidden>0</span>
+            </button>
             <button class="icon-button" id="mapToggleBtn" type="button" title="Karte einklappen" aria-label="Karte einklappen" aria-pressed="false">▤</button>
             <button class="icon-button" id="printMenuBtn" type="button" title="Drucken" aria-label="Drucken" aria-expanded="false">⎙</button>
             <button class="icon-button" id="showAllMobile" type="button" title="Alles anzeigen" aria-label="Alles anzeigen">↗</button>
@@ -91,6 +94,20 @@
         <button class="place-modal-close" type="button" data-close-place-modal aria-label="Schließen">×</button>
         <div class="place-modal-body" id="placeModalBody"></div>
       </article>
+    </div>
+
+    <div class="selection-drawer" id="selectionDrawer" aria-hidden="true">
+      <div class="selection-drawer-backdrop" data-close-selection-drawer></div>
+      <aside class="selection-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="selectionDrawerTitle">
+        <div class="selection-drawer-head">
+          <div>
+            <p class="eyebrow">Eure Route</p>
+            <h2 id="selectionDrawerTitle">Meine Auswahl</h2>
+          </div>
+          <button class="place-modal-close" type="button" data-close-selection-drawer aria-label="Schließen">×</button>
+        </div>
+        <div class="selection-drawer-body" id="selectionDrawerBody"></div>
+      </aside>
     </div>
 
     <section class="print-area" id="printArea" aria-hidden="true"></section>
